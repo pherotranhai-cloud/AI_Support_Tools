@@ -26,7 +26,7 @@ Tab **“Làm tay (dự phòng)”** chứa sẵn prompt cho ChatGPT / Gemini / 
 | `ACCESS_CODE` | trống | mã truy cập web |
 | `TEXT_MODEL` | `gpt-6-luna` → `gpt-4o` → `gpt-4.1` → `gpt-4o-mini` | model đọc đề/viết nội dung (cần hỗ trợ ảnh + PDF + JSON schema). Có thể ghi nhiều model, cách nhau dấu phẩy, web tự thử lần lượt |
 | `IMAGE_MODEL` | `gpt-6-luna` → `gpt-image-1` → `gpt-image-1-mini` → `dall-e-3` | gpt-image cần **Organization verification** trên platform.openai.com. Lỗi hết → slide dùng nền màu |
-| `IMAGE_QUALITY` | `medium` | `low` nhanh/rẻ hơn |
+| `IMAGE_QUALITY` | `low` | `low` rẻ + nhanh nhất (mặc định); `medium` / `high` đẹp hơn nhưng đắt hơn |
 | `TTS_MODEL` | `gpt-4o-mini-tts-2025-12-15` → `gpt-4o-mini-tts` → `tts-1-hd` → `tts-1` | giọng đọc |
 | `TTS_VOICE` | `nova` | alloy, echo, fable, onyx, nova, shimmer, coral… |
 

@@ -4,189 +4,332 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>AI Exam Solver</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232457d6'/%3E%3Cpath d='M9 22l7-13 7 13M12 17h8' stroke='white' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
 <style>
   :root {
-    --bg: #f5f6f8; --card: #fff; --text: #1d2330; --muted: #6b7280; --line: #e3e6eb;
-    --pri: #2457d6; --pri-soft: #e8eefc; --ok: #178a4c; --ok-soft: #e6f5ec; --warn: #b26b00; --warn-soft: #fff4e0; --err: #c62828; --err-soft: #fdecec;
+    --bg: #f3f5f9; --card: #fff; --card-2: #f8f9fc; --text: #172033; --muted: #667085; --line: #e2e6ee;
+    --pri: #2457d6; --pri-2: #4f7cff; --pri-soft: #eaf0ff; --pri-line: #c9d6fb;
+    --ok: #12834a; --ok-soft: #e7f6ee; --ok-line: #b7e2c9;
+    --warn: #9a5b00; --warn-soft: #fff5e3; --warn-line: #f1d49e;
+    --err: #c42b2b; --err-soft: #fdeded; --err-line: #f2bcbc;
+    --head: #111a33; --head-2: #1d2b55; --code-bg: #0f1629; --code-fg: #cfe1ff;
+    --shadow: 0 1px 2px rgba(16,24,40,.05), 0 4px 16px rgba(16,24,40,.06);
+    --radius: 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0e1320; --card: #161d2e; --card-2: #1b2336; --text: #e6eaf2; --muted: #98a2b8; --line: #2a3450;
+      --pri: #5b8cff; --pri-2: #7aa2ff; --pri-soft: #1c2848; --pri-line: #34497d;
+      --ok: #4cc98a; --ok-soft: #12291f; --ok-line: #25533d;
+      --warn: #f0b85a; --warn-soft: #2c2412; --warn-line: #5a4720;
+      --err: #ff7b7b; --err-soft: #2e1618; --err-line: #5e2a2e;
+      --head: #0a0f1c; --head-2: #151f3d; --code-bg: #0a0f1c;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.25);
+    }
   }
   * { box-sizing: border-box; }
-  body { margin: 0; font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.5; }
-  header { background: #16213e; color: #fff; padding: 14px 20px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-  header h1 { font-size: 18px; margin: 0; font-weight: 700; }
-  header .sub { color: #aab4cc; font-size: 13px; }
-  nav { margin-left: auto; display: flex; gap: 6px; }
-  nav button { background: transparent; border: 1px solid #3a4870; color: #dfe6f7; padding: 6px 12px; border-radius: 8px; cursor: pointer; font: inherit; font-size: 13px; }
-  nav button.active { background: #fff; color: #16213e; border-color: #fff; }
-  main { max-width: 1080px; margin: 0 auto; padding: 20px 16px 60px; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin-bottom: 16px; }
-  .card h2 { margin: 0 0 12px; font-size: 16px; }
-  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  @media (max-width: 760px) { .grid2 { grid-template-columns: 1fr; } nav { margin-left: 0; } }
-  .drop { border: 2px dashed #b9c3d6; border-radius: 10px; padding: 16px; text-align: center; cursor: pointer; background: #fafbfd; transition: .15s; min-height: 130px; display: flex; flex-direction: column; justify-content: center; }
-  .drop.focus { border-color: var(--pri); background: var(--pri-soft); }
-  .drop .big { font-weight: 600; }
-  .drop .hint { color: var(--muted); font-size: 13px; }
-  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; justify-content: center; }
-  .chip { background: #eef1f6; border-radius: 999px; padding: 3px 6px 3px 10px; font-size: 12px; display: inline-flex; align-items: center; gap: 4px; max-width: 100%; }
-  .chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }
-  .chip button { border: none; background: none; cursor: pointer; color: var(--muted); font-size: 14px; line-height: 1; }
-  .thumb { width: 28px; height: 28px; object-fit: cover; border-radius: 4px; }
-  textarea, input[type=text], input[type=password] { width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 10px; font: inherit; resize: vertical; }
-  label.q { display: inline-flex; align-items: center; gap: 6px; margin-right: 16px; cursor: pointer; }
-  .row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-  .btn { background: var(--pri); color: #fff; border: none; border-radius: 9px; padding: 11px 20px; font: inherit; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
-  .btn:hover { filter: brightness(1.08); }
-  .btn:disabled { opacity: .5; cursor: not-allowed; }
-  .btn.big { font-size: 17px; padding: 14px 28px; }
-  .btn.ghost { background: #fff; color: var(--pri); border: 1px solid #c6d3f3; }
-  .btn.ok { background: var(--ok); }
-  .btn.sm { padding: 6px 12px; font-size: 13px; font-weight: 600; }
-  .steps { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
-  .step { padding: 5px 12px; border-radius: 999px; font-size: 13px; background: #eef1f6; color: var(--muted); }
-  .step.running { background: var(--pri-soft); color: var(--pri); }
-  .step.done { background: var(--ok-soft); color: var(--ok); }
-  .step.error { background: var(--err-soft); color: var(--err); }
-  .log { background: #0f1629; color: #cfe1ff; font-family: Consolas, monospace; font-size: 12.5px; border-radius: 8px; padding: 10px 12px; max-height: 180px; overflow: auto; white-space: pre-wrap; }
-  .alert { border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; font-size: 14px; }
-  .alert.warn { background: var(--warn-soft); color: #6d4300; border: 1px solid #f2d19c; }
-  .alert.err { background: var(--err-soft); color: #8e1b1b; border: 1px solid #f3b9b9; }
-  .alert.ok { background: var(--ok-soft); color: #0f5d33; border: 1px solid #b6e0c7; }
-  .res h3 { margin: 0 0 6px; font-size: 16px; display: flex; align-items: center; gap: 8px; }
-  .tag { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--pri-soft); color: var(--pri); }
-  .muted { color: var(--muted); font-size: 13px; }
-  ol.slides { margin: 8px 0 0; padding-left: 20px; font-size: 14px; }
-  ol.slides li { margin-bottom: 4px; }
-  ol.slides .n { color: var(--muted); font-size: 12.5px; display: block; }
-  table.pv { border-collapse: collapse; width: 100%; font-size: 13px; margin-top: 8px; }
-  table.pv th, table.pv td { border: 1px solid var(--line); padding: 5px 8px; text-align: left; vertical-align: top; }
-  table.pv th { background: #1f4e79; color: #fff; }
-  .tablewrap { overflow-x: auto; max-height: 320px; overflow-y: auto; }
-  pre.prompt { background: #f7f8fb; border: 1px solid var(--line); border-radius: 8px; padding: 12px; white-space: pre-wrap; font-size: 13px; max-height: 300px; overflow: auto; margin: 8px 0; }
-  .steps-howto { background: #f7f9ff; border: 1px solid #dfe7fb; border-radius: 8px; padding: 10px 14px; font-size: 14px; margin-top: 10px; }
-  .steps-howto ol { margin: 4px 0 0; padding-left: 20px; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+  a { color: var(--pri); }
+  :focus-visible { outline: 3px solid var(--pri-2); outline-offset: 2px; border-radius: 6px; }
   .hidden { display: none !important; }
-  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #16213e; color: #fff; padding: 10px 18px; border-radius: 8px; font-size: 14px; opacity: 0; transition: .2s; pointer-events: none; z-index: 10; }
-  .toast.show { opacity: 1; }
-  .fb h3 { margin-top: 0; }
-  .fb .md { white-space: pre-wrap; font-size: 13.5px; background: #fafbfd; border: 1px solid var(--line); border-radius: 8px; padding: 12px; max-height: 420px; overflow: auto; }
+  .muted { color: var(--muted); font-size: 13px; }
+  svg.i { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* ---------- Header ---------- */
+  header { background: linear-gradient(120deg, var(--head), var(--head-2)); color: #fff; }
+  .head-in { max-width: 1080px; margin: 0 auto; padding: 16px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .logo { width: 40px; height: 40px; border-radius: 11px; background: linear-gradient(135deg, #4f7cff, #2457d6); display: grid; place-items: center; box-shadow: 0 4px 14px rgba(79,124,255,.45); flex: none; }
+  .logo svg { width: 22px; height: 22px; stroke: #fff; fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+  header h1 { font-size: 19px; margin: 0; font-weight: 700; letter-spacing: .2px; }
+  header .sub { color: #aab6d3; font-size: 13px; }
+  .status { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; color: #cfd8ee; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14); padding: 4px 10px; border-radius: 999px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #8a94ab; flex: none; }
+  .dot.ok { background: #3ddc84; box-shadow: 0 0 0 3px rgba(61,220,132,.2); }
+  .dot.err { background: #ff6b6b; box-shadow: 0 0 0 3px rgba(255,107,107,.2); }
+  nav { margin-left: auto; display: flex; gap: 4px; background: rgba(255,255,255,.08); padding: 4px; border-radius: 11px; }
+  nav button { background: transparent; border: none; color: #d7def0; padding: 7px 14px; border-radius: 8px; cursor: pointer; font: inherit; font-size: 13.5px; font-weight: 600; }
+  nav button:hover { background: rgba(255,255,255,.08); }
+  nav button.active { background: #fff; color: #16213e; }
+
+  /* ---------- Layout ---------- */
+  main { max-width: 1080px; margin: 0 auto; padding: 22px 16px 70px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; box-shadow: var(--shadow); }
+  .card-h { display: flex; align-items: center; gap: 10px; margin: 0 0 14px; }
+  .card-h h2 { margin: 0; font-size: 16.5px; }
+  .num { width: 28px; height: 28px; border-radius: 50%; background: var(--pri-soft); color: var(--pri); font-weight: 700; font-size: 14px; display: grid; place-items: center; flex: none; }
+  .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .spacer { flex: 1; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  @media (max-width: 760px) {
+    .grid2, .grid3 { grid-template-columns: 1fr; }
+    nav { margin-left: 0; width: 100%; } nav button { flex: 1; }
+    .card { padding: 16px; }
+  }
+
+  /* ---------- Drop zones ---------- */
+  .drop { position: relative; border: 2px dashed var(--pri-line); border-radius: 12px; padding: 18px 14px; text-align: center; cursor: pointer; background: var(--card-2); transition: border-color .15s, background .15s, transform .15s; min-height: 150px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 4px; }
+  .drop:hover { border-color: var(--pri-2); }
+  .drop.focus { border-color: var(--pri); background: var(--pri-soft); }
+  .drop.over { border-style: solid; transform: scale(1.01); }
+  .drop .ico { width: 42px; height: 42px; border-radius: 12px; background: var(--card); border: 1px solid var(--line); display: grid; place-items: center; color: var(--pri); margin-bottom: 4px; }
+  .drop .ico svg { width: 22px; height: 22px; }
+  .drop .big { font-weight: 700; font-size: 14.5px; }
+  .drop .hint { color: var(--muted); font-size: 12.5px; }
+  .drop .paste-tag { position: absolute; top: 8px; right: 8px; font-size: 11px; font-weight: 700; color: var(--pri); background: var(--card); border: 1px solid var(--pri-line); padding: 1px 8px; border-radius: 999px; opacity: 0; transition: opacity .15s; }
+  .drop.focus .paste-tag { opacity: 1; }
+  .opt { font-size: 11px; font-weight: 600; color: var(--muted); background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 0 7px; margin-left: 4px; vertical-align: 1px; }
+  kbd { font-family: inherit; font-size: 11.5px; font-weight: 700; background: var(--card); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 0 5px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; justify-content: center; }
+  .chip { background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 3px 4px 3px 4px; font-size: 12.5px; display: inline-flex; align-items: center; gap: 6px; max-width: 100%; animation: pop .18s ease-out; }
+  .chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px; padding-left: 4px; }
+  .chip button { border: none; background: var(--card-2); width: 22px; height: 22px; border-radius: 50%; cursor: pointer; color: var(--muted); font-size: 15px; line-height: 1; }
+  .chip button:hover { background: var(--err-soft); color: var(--err); }
+  .thumb { width: 24px; height: 24px; object-fit: cover; border-radius: 50%; }
+  .ext { width: 24px; height: 24px; border-radius: 50%; background: var(--pri-soft); color: var(--pri); font-size: 9px; font-weight: 800; display: grid; place-items: center; text-transform: uppercase; }
+  @keyframes pop { from { transform: scale(.85); opacity: 0; } to { transform: none; opacity: 1; } }
+
+  textarea, input[type=text], input[type=password] { width: 100%; border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 10px; padding: 11px 12px; font: inherit; resize: vertical; transition: border-color .15s, box-shadow .15s; }
+  textarea:focus, input:focus { outline: none; border-color: var(--pri); box-shadow: 0 0 0 3px var(--pri-soft); }
+
+  /* ---------- Question toggles ---------- */
+  .qcard { position: relative; display: flex; gap: 10px; align-items: flex-start; border: 1.5px solid var(--line); border-radius: 12px; padding: 12px; cursor: pointer; background: var(--card); transition: border-color .15s, background .15s; user-select: none; }
+  .qcard:hover { border-color: var(--pri-line); }
+  .qcard input { position: absolute; opacity: 0; pointer-events: none; }
+  .qcard .box { width: 20px; height: 20px; border-radius: 6px; border: 2px solid var(--pri-line); flex: none; margin-top: 1px; display: grid; place-items: center; transition: .15s; }
+  .qcard .box svg { width: 13px; height: 13px; stroke: #fff; stroke-width: 3.5; opacity: 0; }
+  .qcard input:checked ~ .box { background: var(--pri); border-color: var(--pri); }
+  .qcard input:checked ~ .box svg { opacity: 1; }
+  .qcard:has(input:checked) { border-color: var(--pri); background: var(--pri-soft); }
+  .qcard:has(input:focus-visible) { outline: 3px solid var(--pri-2); outline-offset: 2px; }
+  .qcard b { display: block; font-size: 14px; }
+  .qcard small { color: var(--muted); font-size: 12.5px; }
+
+  /* ---------- Buttons ---------- */
+  .btn { background: var(--pri); color: #fff; border: 1px solid transparent; border-radius: 10px; padding: 10px 18px; font: inherit; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; transition: filter .15s, transform .05s, background .15s; white-space: nowrap; }
+  .btn:hover { filter: brightness(1.08); }
+  .btn:active { transform: translateY(1px); }
+  .btn:disabled { opacity: .55; cursor: not-allowed; filter: none; }
+  .btn.big { font-size: 16.5px; padding: 13px 26px; border-radius: 12px; background: linear-gradient(135deg, var(--pri-2), var(--pri)); box-shadow: 0 6px 18px rgba(36,87,214,.3); }
+  .btn.ghost { background: var(--card); color: var(--pri); border-color: var(--pri-line); }
+  .btn.ghost:hover { background: var(--pri-soft); filter: none; }
+  .btn.ok { background: var(--ok); }
+  .btn.sm { padding: 6px 12px; font-size: 13px; border-radius: 8px; }
+  .spin { width: 16px; height: 16px; border: 2.5px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: rot .7s linear infinite; flex: none; }
+  @keyframes rot { to { transform: rotate(360deg); } }
+  .go-row { margin-top: 14px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .go-row .muted { flex: 1; min-width: 200px; }
+
+  /* ---------- Progress ---------- */
+  .bar { height: 8px; background: var(--card-2); border: 1px solid var(--line); border-radius: 999px; overflow: hidden; margin: 4px 0 14px; }
+  .bar > div { height: 100%; width: 0; background: linear-gradient(90deg, var(--pri-2), var(--pri)); border-radius: 999px; transition: width .5s ease; }
+  .bar.done > div { background: var(--ok); }
+  .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+  @media (max-width: 760px) { .steps { grid-template-columns: 1fr 1fr; } }
+  .step { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-radius: 10px; font-size: 13.5px; font-weight: 600; background: var(--card-2); border: 1px solid var(--line); color: var(--muted); }
+  .step .si { width: 18px; height: 18px; display: grid; place-items: center; flex: none; }
+  .step .si::before { content: ''; width: 9px; height: 9px; border-radius: 50%; background: currentColor; opacity: .45; }
+  .step.skip { opacity: .45; text-decoration: line-through; }
+  .step.running { background: var(--pri-soft); color: var(--pri); border-color: var(--pri-line); }
+  .step.running .si::before { width: 14px; height: 14px; opacity: 1; background: none; border: 2.5px solid currentColor; border-right-color: transparent; animation: rot .7s linear infinite; }
+  .step.done { background: var(--ok-soft); color: var(--ok); border-color: var(--ok-line); }
+  .step.done .si::before { content: '✓'; background: none; opacity: 1; width: auto; height: auto; font-weight: 800; }
+  .step.error { background: var(--err-soft); color: var(--err); border-color: var(--err-line); }
+  .step.error .si::before { content: '!'; background: none; opacity: 1; width: auto; height: auto; font-weight: 800; }
+  .lastlog { font-size: 14px; display: flex; gap: 8px; align-items: center; min-height: 22px; }
+  details.logbox { margin-top: 10px; }
+  details.logbox summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+  .log { background: var(--code-bg); color: var(--code-fg); font-family: Consolas, "Cascadia Mono", monospace; font-size: 12.5px; border-radius: 10px; padding: 10px 12px; max-height: 220px; overflow: auto; white-space: pre-wrap; margin-top: 8px; }
+
+  /* ---------- Alerts & results ---------- */
+  .alert { border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; font-size: 14px; border: 1px solid; }
+  .alert.warn { background: var(--warn-soft); color: var(--warn); border-color: var(--warn-line); }
+  .alert.err { background: var(--err-soft); color: var(--err); border-color: var(--err-line); }
+  .alert.ok { background: var(--ok-soft); color: var(--ok); border-color: var(--ok-line); }
+  .alert ul { margin: 4px 0; padding-left: 20px; }
+  .res-hero { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .res-hero .big-ic { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; background: var(--ok-soft); color: var(--ok); flex: none; }
+  .res-hero .big-ic.partial { background: var(--warn-soft); color: var(--warn); }
+  .res-hero .big-ic svg { width: 24px; height: 24px; stroke-width: 2.5; }
+  .res-hero h2 { margin: 0; font-size: 17px; }
+  .res h3 { margin: 0 0 12px; font-size: 16px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .res h3 .qn { background: var(--pri); color: #fff; font-size: 12px; font-weight: 700; border-radius: 7px; padding: 2px 8px; }
+  .tag { font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 999px; background: var(--pri-soft); color: var(--pri); }
+  .tag:empty { display: none; }
+  .howto { background: var(--card-2); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font-size: 14px; margin-top: 12px; }
+  .howto ol { margin: 6px 0 0; padding-left: 20px; }
+  .howto li { margin-bottom: 3px; }
+  .slides { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; margin-top: 12px; padding: 0; list-style: none; counter-reset: s; }
+  .slides li { counter-increment: s; background: var(--card-2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 13.5px; }
+  .slides li b::before { content: counter(s) ". "; color: var(--pri); }
+  .slides .n { color: var(--muted); font-size: 12.5px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin-top: 3px; }
+  table.pv { border-collapse: collapse; width: 100%; font-size: 13px; }
+  table.pv th, table.pv td { border: 1px solid var(--line); padding: 6px 9px; text-align: left; vertical-align: top; }
+  table.pv th { background: #1f4e79; color: #fff; position: sticky; top: 0; font-weight: 600; }
+  table.pv tr:nth-child(even) td { background: var(--card-2); }
+  .tablewrap { overflow: auto; max-height: 340px; border-radius: 8px; margin-top: 8px; border: 1px solid var(--line); }
+  pre.prompt { background: var(--card-2); border: 1px solid var(--line); border-radius: 10px; padding: 12px; white-space: pre-wrap; font-size: 13px; max-height: 300px; overflow: auto; margin: 8px 0; }
+  .fix { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-top: 1px dashed var(--line); }
+  .fix span { flex: 1; font-size: 13.5px; }
+  .sub-h { margin: 14px 0 4px; font-weight: 700; font-size: 14px; }
+
+  /* ---------- Health ---------- */
+  .health { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .health .muted { flex: 1; min-width: 220px; }
+
+  /* ---------- Manual tab ---------- */
+  .fb h3 { margin: 0; font-size: 15.5px; }
+  .fb .md { white-space: pre-wrap; font-size: 13.5px; background: var(--card-2); border: 1px solid var(--line); border-radius: 10px; padding: 12px; max-height: 420px; overflow: auto; margin-top: 12px; }
+
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translate(-50%, 10px); background: #16213e; color: #fff; padding: 10px 18px; border-radius: 10px; font-size: 14px; opacity: 0; transition: .2s; pointer-events: none; z-index: 10; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+  footer { text-align: center; color: var(--muted); font-size: 12.5px; padding: 0 16px 30px; }
+  @media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } }
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></symbol>
+  <symbol id="i-img" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></symbol>
+  <symbol id="i-dl" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></symbol>
+  <symbol id="i-ext" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></symbol>
+  <symbol id="i-retry" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></symbol>
+  <symbol id="i-pulse" viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></symbol>
+</svg>
+
 <header>
-  <div>
-    <h1>AI Exam Solver</h1>
-    <div class="sub">Thi Chuẩn đầu ra AI: slide + audio · trích xuất ảnh/PDF · prompt app học ngôn ngữ</div>
+  <div class="head-in">
+    <div class="logo"><svg viewBox="0 0 24 24"><path d="M5 19L12 5l7 14M8.5 14h7"/></svg></div>
+    <div>
+      <h1>AI Exam Solver</h1>
+      <div class="sub">Thi Chuẩn đầu ra AI · Slide + audio · Trích xuất ảnh/PDF · App học ngôn ngữ</div>
+    </div>
+    <span class="status" id="srvStatus" title="Trạng thái server"><span class="dot" id="srvDot"></span><span id="srvText">Đang kết nối…</span></span>
+    <nav role="tablist">
+      <button class="active" data-tab="auto" role="tab" aria-selected="true">Tự động</button>
+      <button data-tab="manual" role="tab" aria-selected="false">Làm tay (dự phòng)</button>
+    </nav>
   </div>
-  <nav>
-    <button class="active" data-tab="auto">Tự động</button>
-    <button data-tab="manual">Làm tay (dự phòng)</button>
-  </nav>
 </header>
 
 <main>
   <!-- ============ TAB TỰ ĐỘNG ============ -->
   <section id="tab-auto">
     <div id="codeBox" class="card hidden">
-      <h2>Mã truy cập</h2>
-      <input type="password" id="code" placeholder="Nhập mã truy cập (hỏi người tạo web)" />
+      <div class="card-h"><span class="num">🔒</span><h2>Mã truy cập</h2></div>
+      <input type="password" id="code" placeholder="Nhập mã truy cập (hỏi người tạo web)" autocomplete="current-password" />
     </div>
 
-    <div class="card">
-      <h2>Bước 1 — Đưa đề và dữ liệu vào</h2>
+    <div class="card" id="inputCard">
+      <div class="card-h"><span class="num">1</span><h2>Đưa đề và dữ liệu vào</h2></div>
       <div class="grid2">
-        <div>
-          <div class="drop focus" id="dropExam" tabindex="0">
-            <div class="big">① ĐỀ THI</div>
-            <div class="hint">Kéo thả / bấm để chọn / <b>Ctrl+V</b> dán ảnh chụp đề<br>Ảnh, PDF, Word, TXT</div>
-            <div class="chips" id="chipsExam"></div>
-          </div>
+        <div class="drop focus" id="dropExam" tabindex="0" role="button" aria-label="Ô đề thi: bấm để chọn file">
+          <span class="paste-tag">Ctrl+V dán vào đây</span>
+          <div class="ico"><svg class="i"><use href="#i-doc"/></svg></div>
+          <div class="big">① Đề thi</div>
+          <div class="hint">Kéo thả, bấm để chọn, hoặc <kbd>Ctrl</kbd>+<kbd>V</kbd> dán ảnh chụp đề<br>Ảnh · PDF · Word · TXT</div>
+          <div class="chips" id="chipsExam"></div>
         </div>
-        <div>
-          <div class="drop" id="dropData" tabindex="0">
-            <div class="big">② ẢNH / PDF CẦN TRÍCH XUẤT (Câu 2)</div>
-            <div class="hint">Kéo thả / bấm chọn / bấm vào ô này rồi <b>Ctrl+V</b><br>Bỏ trống nếu ảnh đã nằm trong đề</div>
-            <div class="chips" id="chipsData"></div>
-          </div>
+        <div class="drop" id="dropData" tabindex="0" role="button" aria-label="Ô ảnh hoặc PDF cần trích xuất cho câu 2">
+          <span class="paste-tag">Ctrl+V dán vào đây</span>
+          <div class="ico"><svg class="i"><use href="#i-img"/></svg></div>
+          <div class="big">② Ảnh / PDF cần trích xuất <span class="opt">Câu 2 · tùy chọn</span></div>
+          <div class="hint">Bấm vào ô này rồi <kbd>Ctrl</kbd>+<kbd>V</kbd>, hoặc kéo thả<br>Bỏ trống nếu ảnh đã nằm trong đề</div>
+          <div class="chips" id="chipsData"></div>
         </div>
       </div>
+
       <div style="margin-top:14px">
         <textarea id="note" rows="2" placeholder="(Tùy chọn) Ghi chú thêm — ví dụ: sản phẩm là điện thoại Galaxy S26; 8 slide; app học tiếng Nhật…"></textarea>
       </div>
-      <div class="row" style="margin-top:12px; justify-content: space-between">
-        <div>
-          <label class="q"><input type="checkbox" class="qsel" value="1" checked> Câu 1 (Slide)</label>
-          <label class="q"><input type="checkbox" class="qsel" value="2" checked> Câu 2 (Trích xuất)</label>
-          <label class="q"><input type="checkbox" class="qsel" value="3" checked> Câu 3 (App)</label>
-        </div>
-        <button class="btn big" id="go">Giải đề</button>
+
+      <div class="grid3" style="margin-top:12px">
+        <label class="qcard"><input type="checkbox" class="qsel" value="1" checked><span class="box"><svg class="i"><use href="#i-check"/></svg></span><span><b>Câu 1 · Slide</b><small>PowerPoint có ảnh AI + giọng đọc tự phát</small></span></label>
+        <label class="qcard"><input type="checkbox" class="qsel" value="2" checked><span class="box"><svg class="i"><use href="#i-check"/></svg></span><span><b>Câu 2 · Trích xuất</b><small>Ảnh/PDF → Excel + Word</small></span></label>
+        <label class="qcard"><input type="checkbox" class="qsel" value="3" checked><span class="box"><svg class="i"><use href="#i-check"/></svg></span><span><b>Câu 3 · App</b><small>Prompt cho Google AI Studio</small></span></label>
+      </div>
+
+      <div class="go-row">
+        <span class="muted" id="goHint">Mất khoảng 1–3 phút. Mẹo: <kbd>Ctrl</kbd>+<kbd>Enter</kbd> để giải nhanh.</span>
+        <button class="btn big" id="go"><svg class="i"><use href="#i-bolt"/></svg><span>Giải đề</span></button>
       </div>
       <input type="file" id="fileExam" multiple accept="image/*,.pdf,.docx,.txt,.md,.pptx" hidden />
       <input type="file" id="fileData" multiple accept="image/*,.pdf,.docx,.txt" hidden />
     </div>
 
-    <div class="card hidden" id="progress">
-      <h2>Bước 2 — Đang xử lý <span class="muted" id="elapsed"></span></h2>
+    <div class="card hidden" id="progress" aria-live="polite">
+      <div class="card-h"><span class="num">2</span><h2>Đang xử lý</h2><span class="spacer"></span><span class="muted" id="elapsed"></span></div>
+      <div class="bar" id="bar"><div></div></div>
       <div class="steps">
-        <span class="step" id="st-analyze">Phân tích đề</span>
-        <span class="step" id="st-q1">Câu 1</span>
-        <span class="step" id="st-q2">Câu 2</span>
-        <span class="step" id="st-q3">Câu 3</span>
+        <span class="step" id="st-analyze"><span class="si"></span>Phân tích đề</span>
+        <span class="step" id="st-q1"><span class="si"></span>Câu 1 · Slide</span>
+        <span class="step" id="st-q2"><span class="si"></span>Câu 2 · Trích xuất</span>
+        <span class="step" id="st-q3"><span class="si"></span>Câu 3 · App</span>
       </div>
-      <div class="log" id="log"></div>
+      <div class="lastlog" id="lastlog"></div>
+      <details class="logbox"><summary>Xem nhật ký chi tiết</summary><div class="log" id="log"></div></details>
     </div>
 
     <div id="results" class="hidden">
       <div class="card">
-        <div class="row" style="justify-content: space-between">
-          <h2 style="margin:0">Bước 3 — Kết quả</h2>
-          <a class="btn ok" id="zipAll" href="#">Tải tất cả (.zip)</a>
+        <div class="res-hero">
+          <div class="big-ic" id="resIc"><svg class="i"><use href="#i-check"/></svg></div>
+          <div style="flex:1; min-width:220px">
+            <h2 id="resTitle">Đã xong!</h2>
+            <p class="muted" id="summary" style="margin:2px 0 0"></p>
+          </div>
+          <a class="btn ok" id="zipAll" href="#"><svg class="i"><use href="#i-dl"/></svg>Tải tất cả (.zip)</a>
         </div>
-        <p class="muted" id="summary" style="margin:8px 0 0"></p>
       </div>
       <div id="warnings"></div>
 
       <div class="card res hidden" id="r1">
-        <h3>Câu 1 — Slide có ảnh + lời thuyết trình audio <span class="tag" id="r1tag"></span></h3>
+        <h3><span class="qn">Câu 1</span>Slide có ảnh + lời thuyết trình audio <span class="tag" id="r1tag"></span></h3>
         <div id="r1err"></div>
         <div class="row" id="r1btns"></div>
-        <div class="steps-howto">
-          <b>Cách dùng:</b>
+        <div class="howto">
+          <b>Cách dùng</b>
           <ol>
-            <li>Mở file .pptx bằng PowerPoint → nhấn <b>F5</b>: mỗi slide <b>tự phát giọng đọc</b> và tự chuyển slide khi đọc xong.</li>
-            <li>Biểu tượng loa nằm ở góc phải dưới mỗi slide (bấm vào để nghe lại). Lời thuyết trình có sẵn trong phần Notes.</li>
-            <li>Nếu đề yêu cầu nộp video: PowerPoint → File → Export → <b>Create a Video</b> (chọn “Use Recorded Timings and Narrations”).</li>
+            <li>Mở file .pptx bằng PowerPoint → nhấn <kbd>F5</kbd>: mỗi slide <b>tự phát giọng đọc</b> và tự chuyển khi đọc xong.</li>
+            <li>Biểu tượng loa ở góc phải dưới mỗi slide (bấm để nghe lại). Lời thuyết trình có sẵn trong phần Notes.</li>
+            <li>Nếu đề yêu cầu nộp video: File → Export → <b>Create a Video</b> → chọn “Use Recorded Timings and Narrations”.</li>
           </ol>
         </div>
         <ol class="slides" id="r1slides"></ol>
       </div>
 
       <div class="card res hidden" id="r2">
-        <h3>Câu 2 — Trích xuất dữ liệu <span class="tag" id="r2tag"></span></h3>
+        <h3><span class="qn">Câu 2</span>Trích xuất dữ liệu <span class="tag" id="r2tag"></span></h3>
         <div id="r2err"></div>
         <div class="row" id="r2btns"></div>
-        <p class="muted" id="r2sum"></p>
+        <p class="muted" id="r2sum" style="margin:10px 0 0"></p>
         <div id="r2preview"></div>
       </div>
 
       <div class="card res hidden" id="r3">
-        <h3>Câu 3 — App học ngôn ngữ trên Google AI Studio <span class="tag" id="r3tag"></span></h3>
+        <h3><span class="qn">Câu 3</span>App học ngôn ngữ trên Google AI Studio <span class="tag" id="r3tag"></span></h3>
         <div id="r3err"></div>
         <div id="r3body">
           <div class="row">
-            <button class="btn" id="r3go">Copy prompt &amp; mở AI Studio</button>
-            <button class="btn ghost sm" id="r3copy">Chỉ copy prompt</button>
-            <a class="btn ghost sm" id="r3dl" href="#">Tải file .txt</a>
+            <button class="btn" id="r3go"><svg class="i"><use href="#i-ext"/></svg>Copy prompt &amp; mở AI Studio</button>
+            <button class="btn ghost sm" id="r3copy"><svg class="i"><use href="#i-copy"/></svg>Chỉ copy prompt</button>
+            <a class="btn ghost sm" id="r3dl" href="#"><svg class="i"><use href="#i-dl"/></svg>Tải file .txt</a>
           </div>
-          <div class="steps-howto">
-            <b>Cách làm (3 thao tác):</b>
+          <div class="howto">
+            <b>Cách làm (3 thao tác)</b>
             <ol>
               <li>Bấm nút xanh ở trên → trang AI Studio Build mở ra (đăng nhập Google nếu được hỏi).</li>
-              <li>Bấm vào ô nhập mô tả → <b>Ctrl+V</b> → bấm <b>Build</b> (hoặc Enter). Chờ 1–3 phút.</li>
-              <li>App chạy ở khung Preview bên phải. Nộp bài: bấm <b>Share</b> (hoặc Deploy/Publish) để lấy link, hoặc Download để tải mã nguồn.</li>
+              <li>Bấm vào ô nhập mô tả → <kbd>Ctrl</kbd>+<kbd>V</kbd> → bấm <b>Build</b>. Chờ 1–3 phút.</li>
+              <li>App chạy ở khung Preview bên phải. Nộp bài: bấm <b>Share</b> (hoặc Deploy) để lấy link, hoặc Download mã nguồn.</li>
             </ol>
             Nếu app lỗi: copy một “prompt sửa lỗi” bên dưới, dán vào khung chat bên trái của AI Studio.
           </div>
-          <p class="muted" id="r3line"></p>
+          <p class="muted" id="r3line" style="margin:12px 0 0"></p>
           <pre class="prompt" id="r3prompt"></pre>
           <div id="r3fix"></div>
           <div id="r3demo"></div>
@@ -195,16 +338,16 @@
 
       <div class="card">
         <div class="row">
-          <button class="btn ghost" id="again">Làm lại (giữ file đã chọn)</button>
+          <button class="btn ghost" id="again"><svg class="i"><use href="#i-retry"/></svg>Làm lại (giữ file đã chọn)</button>
           <button class="btn ghost" id="reset">Bài mới (xóa hết)</button>
         </div>
       </div>
     </div>
 
     <div class="card">
-      <div class="row" style="justify-content: space-between">
-        <span class="muted">Kiểm tra API trước giờ thi (key OpenAI trên server, model ảnh/giọng đọc có dùng được không).</span>
-        <button class="btn ghost sm" id="health">Kiểm tra API</button>
+      <div class="health">
+        <span class="muted">Kiểm tra trước giờ thi: key OpenAI trên server và các model đọc đề / tạo ảnh / giọng đọc có dùng được không.</span>
+        <button class="btn ghost sm" id="health"><svg class="i"><use href="#i-pulse"/></svg>Kiểm tra API</button>
       </div>
       <div id="healthOut" style="margin-top:10px"></div>
     </div>
@@ -216,7 +359,8 @@
     <div id="fbList"></div>
   </section>
 </main>
-<div class="toast" id="toast"></div>
+<footer>Kết quả do AI tạo — hãy xem lại trước khi nộp bài.</footer>
+<div class="toast" id="toast" role="status"></div>
 
 <script>
 const $ = (s) => document.querySelector(s);
@@ -224,10 +368,13 @@ const files = { exam: [], data: [] };
 let target = 'exam';
 let jobId = null;
 let pollTimer = null;
+let tickTimer = null;
 let startedAt = 0;
+let running = false;
+const icon = (id) => `<svg class="i"><use href="#i-${id}"/></svg>`;
 
 function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2200); }
-function esc(s) { return String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+function esc(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 function getCode() { try { return localStorage.getItem('accessCode') || ''; } catch { return ''; } }
 function headers() { const c = $('#code').value || getCode(); return c ? { 'x-access-code': c } : {}; }
 async function copy(text) {
@@ -236,10 +383,12 @@ async function copy(text) {
   toast('Đã copy vào clipboard');
 }
 function fileUrl(name) { const c = $('#code').value || getCode(); return `/api/jobs/${jobId}/file?name=${encodeURIComponent(name)}${c ? '&code=' + encodeURIComponent(c) : ''}`; }
+function setStatus(state, text) { $('#srvDot').className = 'dot ' + state; $('#srvText').textContent = text; }
+const fmtTime = (s) => (s >= 60 ? `${Math.floor(s / 60)} phút ${s % 60} giây` : `${s} giây`);
 
 // ---------- Tabs ----------
 document.querySelectorAll('nav button').forEach((b) => b.onclick = () => {
-  document.querySelectorAll('nav button').forEach((x) => x.classList.toggle('active', x === b));
+  document.querySelectorAll('nav button').forEach((x) => { x.classList.toggle('active', x === b); x.setAttribute('aria-selected', x === b); });
   $('#tab-auto').classList.toggle('hidden', b.dataset.tab !== 'auto');
   $('#tab-manual').classList.toggle('hidden', b.dataset.tab !== 'manual');
   if (b.dataset.tab === 'manual') loadFallback();
@@ -248,8 +397,12 @@ document.querySelectorAll('nav button').forEach((b) => b.onclick = () => {
 // ---------- Config ----------
 fetch('/api/config').then((r) => r.json()).then((c) => {
   if (c.needCode) { $('#codeBox').classList.remove('hidden'); $('#code').value = getCode(); }
-  if (!c.hasKey) $('#healthOut').innerHTML = '<div class="alert err">Server chưa có OPENAI_API_KEY. Vào Render → Environment để thêm.</div>';
-});
+  if (c.hasKey) setStatus('ok', 'Server sẵn sàng');
+  else {
+    setStatus('err', 'Chưa có API key');
+    $('#healthOut').innerHTML = '<div class="alert err">Server chưa có OPENAI_API_KEY. Vào Render → Environment để thêm.</div>';
+  }
+}).catch(() => setStatus('err', 'Không kết nối được server'));
 $('#code').addEventListener('change', () => { try { localStorage.setItem('accessCode', $('#code').value); } catch {} });
 
 // ---------- Drop zones ----------
@@ -260,9 +413,10 @@ function render(kind) {
   files[kind].forEach((f, i) => {
     const el = document.createElement('div');
     el.className = 'chip';
-    if (f.type.startsWith('image/')) { const img = document.createElement('img'); img.className = 'thumb'; img.src = URL.createObjectURL(f); el.appendChild(img); }
-    const s = document.createElement('span'); s.textContent = f.name; el.appendChild(s);
-    const x = document.createElement('button'); x.textContent = '×'; x.title = 'Bỏ file';
+    if (f.type.startsWith('image/')) { const img = document.createElement('img'); img.className = 'thumb'; img.alt = ''; img.src = URL.createObjectURL(f); el.appendChild(img); }
+    else { const e = document.createElement('span'); e.className = 'ext'; e.textContent = (f.name.split('.').pop() || '').slice(0, 4); el.appendChild(e); }
+    const s = document.createElement('span'); s.textContent = f.name; s.title = f.name; el.appendChild(s);
+    const x = document.createElement('button'); x.type = 'button'; x.textContent = '×'; x.title = 'Bỏ file'; x.setAttribute('aria-label', 'Bỏ ' + f.name);
     x.onclick = (e) => { e.stopPropagation(); files[kind].splice(i, 1); render(kind); };
     el.appendChild(x); box.appendChild(el);
   });
@@ -278,19 +432,42 @@ function add(kind, list) {
 [['exam', '#dropExam', '#fileExam'], ['data', '#dropData', '#fileData']].forEach(([kind, dz, inp]) => {
   const d = $(dz), i = $(inp);
   d.onclick = () => { setTarget(kind); i.click(); };
+  d.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); d.click(); } };
   d.onfocus = () => setTarget(kind);
   i.onchange = () => { add(kind, i.files); i.value = ''; };
-  d.ondragover = (e) => { e.preventDefault(); setTarget(kind); };
-  d.ondrop = (e) => { e.preventDefault(); add(kind, e.dataTransfer.files); };
+  d.ondragover = (e) => { e.preventDefault(); setTarget(kind); d.classList.add('over'); };
+  d.ondragleave = () => d.classList.remove('over');
+  d.ondrop = (e) => { e.preventDefault(); d.classList.remove('over'); add(kind, e.dataTransfer.files); };
 });
 document.addEventListener('paste', (e) => {
   if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
   const list = [...(e.clipboardData?.items || [])].filter((it) => it.kind === 'file').map((it) => it.getAsFile());
   if (list.length) { e.preventDefault(); add(target, list); toast(`Đã dán ${list.length} ảnh vào ô ${target === 'exam' ? '① Đề thi' : '② Dữ liệu'}`); }
 });
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !running && !$('#tab-auto').classList.contains('hidden')) { e.preventDefault(); solve(); }
+});
+window.addEventListener('beforeunload', (e) => { if (running) { e.preventDefault(); e.returnValue = ''; } });
 
 // ---------- Solve ----------
+function setRunning(on) {
+  running = on;
+  $('#go').disabled = on;
+  $('#again').disabled = on;
+  $('#go').innerHTML = on ? '<span class="spin"></span><span>Đang giải…</span>' : `${icon('bolt')}<span>Giải đề</span>`;
+  clearInterval(tickTimer);
+  if (on) tickTimer = setInterval(() => { $('#elapsed').textContent = fmtTime(Math.round((Date.now() - startedAt) / 1000)); }, 1000);
+}
+function setProgress(steps, status) {
+  const active = Object.values(steps).filter((v) => v !== 'skip');
+  const w = { pending: 0, running: 0.45, done: 1, error: 1 };
+  const pct = status && status !== 'running' ? 100 : Math.max(4, Math.round((active.reduce((s, v) => s + (w[v] ?? 0), 0) / active.length) * 100));
+  $('#bar').firstElementChild.style.width = pct + '%';
+  $('#bar').classList.toggle('done', pct === 100);
+}
+
 async function solve() {
+  if (running) return;
   const qs = [...document.querySelectorAll('.qsel:checked')].map((x) => x.value);
   if (!qs.length) return toast('Chọn ít nhất 1 câu');
   if (!files.exam.length && !$('#note').value.trim() && !confirm('Chưa có file đề. Dùng đề mẫu mặc định?')) return;
@@ -299,26 +476,30 @@ async function solve() {
   files.data.forEach((f) => fd.append('data', f));
   fd.append('note', $('#note').value);
   fd.append('questions', qs.join(','));
-  $('#go').disabled = true;
+  startedAt = Date.now();
+  setRunning(true);
   $('#results').classList.add('hidden');
   $('#progress').classList.remove('hidden');
-  $('#log').textContent = 'Đang gửi file lên server… (nếu server đang “ngủ”, lần đầu có thể mất ~1 phút để khởi động)';
-  ['analyze', 'q1', 'q2', 'q3'].forEach((k) => $('#st-' + k).className = 'step');
-  startedAt = Date.now();
+  $('#elapsed').textContent = '';
+  $('#lastlog').innerHTML = '<span class="spin" style="color:var(--pri)"></span>Đang gửi file lên server… (nếu server đang “ngủ”, lần đầu có thể mất ~1 phút)';
+  $('#log').textContent = '';
+  ['analyze', 'q1', 'q2', 'q3'].forEach((k) => $('#st-' + k).className = 'step' + (k !== 'analyze' && !qs.includes(k[1]) ? ' skip' : ''));
+  setProgress({ analyze: 'running' });
+  $('#progress').scrollIntoView({ behavior: 'smooth', block: 'start' });
   try {
     const r = await fetch('/api/solve', { method: 'POST', body: fd, headers: headers() });
-    const j = await r.json();
+    const j = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(j.error || r.statusText);
     jobId = j.id;
     poll();
   } catch (e) {
-    $('#log').textContent = '✖ ' + e.message;
-    $('#go').disabled = false;
+    $('#lastlog').innerHTML = `<span style="color:var(--err)">✖ ${esc(e.message)}</span>`;
+    setRunning(false);
   }
 }
 $('#go').onclick = solve;
 $('#again').onclick = () => { window.scrollTo({ top: 0, behavior: 'smooth' }); solve(); };
-$('#reset').onclick = () => { files.exam = []; files.data = []; render('exam'); render('data'); $('#note').value = ''; $('#results').classList.add('hidden'); $('#progress').classList.add('hidden'); window.scrollTo({ top: 0 }); };
+$('#reset').onclick = () => { files.exam = []; files.data = []; render('exam'); render('data'); $('#note').value = ''; $('#results').classList.add('hidden'); $('#progress').classList.add('hidden'); setTarget('exam'); window.scrollTo({ top: 0 }); };
 
 async function poll() {
   clearTimeout(pollTimer);
@@ -326,24 +507,37 @@ async function poll() {
     const r = await fetch('/api/jobs/' + jobId, { headers: headers() });
     const j = await r.json();
     if (!r.ok) throw new Error(j.error);
-    $('#elapsed').textContent = `(${Math.round((Date.now() - startedAt) / 1000)} giây)`;
-    for (const [k, v] of Object.entries(j.steps)) $('#st-' + k).className = 'step ' + (v === 'skip' ? '' : v);
-    $('#log').textContent = j.logs.map((l) => l.m).join('\n');
-    $('#log').scrollTop = 1e9;
-    if (j.status === 'running') { pollTimer = setTimeout(poll, 1500); return; }
-    $('#go').disabled = false;
+    for (const [k, v] of Object.entries(j.steps)) $('#st-' + k).className = 'step ' + v;
+    setProgress(j.steps, j.status);
+    const logs = j.logs.map((l) => l.m);
+    const log = $('#log');
+    const atBottom = log.scrollTop + log.clientHeight >= log.scrollHeight - 20;
+    log.textContent = logs.join('\n');
+    if (atBottom) log.scrollTop = 1e9;
+    if (j.status === 'running') {
+      $('#lastlog').innerHTML = `<span class="spin" style="color:var(--pri)"></span>${esc(logs[logs.length - 1] || 'Đang xử lý…')}`;
+      pollTimer = setTimeout(poll, 1500);
+      return;
+    }
+    setRunning(false);
+    $('#elapsed').textContent = 'Hoàn tất sau ' + fmtTime(Math.round((Date.now() - startedAt) / 1000));
+    $('#lastlog').textContent = '';
     showResults(j);
   } catch (e) {
-    $('#log').textContent += '\n⚠ ' + e.message + ' — thử lại…';
+    $('#lastlog').innerHTML = `<span class="spin" style="color:var(--warn)"></span>⚠ ${esc(e.message)} — đang thử lại…`;
     pollTimer = setTimeout(poll, 3000);
   }
 }
 
-function btn(label, href, cls = 'btn') { return `<a class="${cls}" href="${href}">${esc(label)}</a>`; }
+function btn(label, href, cls = 'btn', ic = 'dl') { return `<a class="${cls}" href="${href}">${icon(ic)}${esc(label)}</a>`; }
 
 function showResults(j) {
   $('#results').classList.remove('hidden');
   const a = j.result.analysis;
+  const bad = j.status !== 'done';
+  $('#resIc').className = 'big-ic' + (bad ? ' partial' : '');
+  $('#resIc').innerHTML = icon(bad ? 'alert' : 'check');
+  $('#resTitle').textContent = j.status === 'done' ? 'Đã xong! Tải file bên dưới' : j.status === 'partial' ? 'Xong một phần — có câu bị lỗi' : 'Không giải được đề';
   $('#summary').textContent = a ? a.exam_summary : '';
   const warn = [...(a?.warnings || [])];
   if (j.errors.fatal) warn.unshift('Lỗi: ' + j.errors.fatal);
@@ -359,9 +553,10 @@ function showResults(j) {
   const q1 = j.result.q1;
   $('#r1tag').textContent = a ? a.q1.product : '';
   if (q1) {
-    $('#r1btns').innerHTML = btn('Tải Slide (.pptx)', fileUrl(q1.pptx)) + ' ' + btn('Lời thuyết trình (.txt)', fileUrl(q1.script), 'btn ghost sm');
+    $('#r1btns').innerHTML = btn('Tải Slide (.pptx)', fileUrl(q1.pptx)) + btn('Lời thuyết trình (.txt)', fileUrl(q1.script), 'btn ghost sm') +
+      `<span class="muted">${q1.slides.length} slide · ~${fmtTime(q1.totalSeconds || 0)} thuyết trình</span>`;
     $('#r1slides').innerHTML = q1.slides.map((s) => `<li><b>${esc(s.title)}</b><span class="n">${esc(s.narration)}</span></li>`).join('');
-    if (q1.imageErrors) $('#r1err').innerHTML += `<div class="alert warn">${q1.imageErrors} ảnh không tạo được (key có thể chưa được dùng model ảnh) → đã thay bằng nền màu. Có thể tự chèn ảnh trong PowerPoint (Insert → Pictures → Stock Images).</div>`;
+    if (q1.imageErrors) $('#r1err').innerHTML += `<div class="alert warn">${q1.imageErrors} ảnh không tạo được → đã thay bằng nền màu. Có thể tự chèn ảnh trong PowerPoint (Insert → Pictures → Stock Images).</div>`;
     if (a.q1.required_tool) $('#r1err').innerHTML += `<div class="alert warn">Đề yêu cầu dùng <b>${esc(a.q1.required_tool)}</b>: xem tab “Làm tay” câu 1 để làm lại trên công cụ đó (có thể import file PPTX này vào).</div>`;
   } else { $('#r1btns').innerHTML = ''; $('#r1slides').innerHTML = ''; }
 
@@ -375,15 +570,15 @@ function showResults(j) {
     $('#r2tag').textContent = fmt === 'excel' ? 'Đề yêu cầu: Excel' : fmt === 'word' ? 'Đề yêu cầu: Word' : 'Excel + Word';
     const x = btn('Tải Excel (.xlsx)', fileUrl(q2.xlsx), fmt === 'word' ? 'btn ghost sm' : 'btn');
     const w = btn('Tải Word (.docx)', fileUrl(q2.docx), fmt === 'excel' ? 'btn ghost sm' : 'btn');
-    $('#r2btns').innerHTML = (fmt === 'word' ? w + ' ' + x : x + ' ' + w);
+    $('#r2btns').innerHTML = fmt === 'word' ? w + x : x + w;
     const d = q2.data;
     $('#r2sum').textContent = (d.summary || '') + (q2.usedExamFiles ? ' (Không có file ở ô ②, đã trích xuất từ ảnh trong đề.)' : '');
     let html = '';
-    if (d.fields?.length) html += `<div class="tablewrap"><table class="pv"><tr><th>Thông tin</th><th>Giá trị</th></tr>${d.fields.map((f) => `<tr><td>${esc(f.label)}</td><td>${esc(f.value)}</td></tr>`).join('')}</table></div>`;
-    for (const t of d.tables || []) html += `<p style="margin:12px 0 0"><b>${esc(t.name)}</b> <span class="muted">(${t.rows.length} dòng)</span></p><div class="tablewrap"><table class="pv"><tr>${t.columns.map((c) => `<th>${esc(c)}</th>`).join('')}</tr>${t.rows.slice(0, 30).map((r) => `<tr>${t.columns.map((_, i) => `<td>${esc(r[i])}</td>`).join('')}</tr>`).join('')}</table></div>`;
+    if (d.fields?.length) html += `<p class="sub-h">Thông tin chung</p><div class="tablewrap"><table class="pv"><tr><th>Thông tin</th><th>Giá trị</th></tr>${d.fields.map((f) => `<tr><td>${esc(f.label)}</td><td>${esc(f.value)}</td></tr>`).join('')}</table></div>`;
+    for (const t of d.tables || []) html += `<p class="sub-h">${esc(t.name)} <span class="muted">(${t.rows.length} dòng${t.rows.length > 30 ? ', hiển thị 30' : ''})</span></p><div class="tablewrap"><table class="pv"><tr>${t.columns.map((c) => `<th>${esc(c)}</th>`).join('')}</tr>${t.rows.slice(0, 30).map((r) => `<tr>${t.columns.map((_, i) => `<td>${esc(r[i])}</td>`).join('')}</tr>`).join('')}</table></div>`;
     if (d.notes?.length) html += `<p class="muted">Lưu ý: ${d.notes.map(esc).join(' · ')}</p>`;
     $('#r2preview').innerHTML = html;
-  } else { $('#r2btns').innerHTML = ''; $('#r2preview').innerHTML = ''; $('#r2sum').textContent = ''; }
+  } else { $('#r2btns').innerHTML = ''; $('#r2preview').innerHTML = ''; $('#r2sum').textContent = ''; $('#r2tag').textContent = ''; }
 
   // Câu 3
   const s3 = j.steps.q3;
@@ -398,9 +593,9 @@ function showResults(j) {
     $('#r3dl').href = fileUrl(q3.file);
     $('#r3copy').onclick = () => copy(q3.prompt);
     $('#r3go').onclick = async () => { await copy(q3.prompt); window.open('https://aistudio.google.com/apps', '_blank'); };
-    $('#r3fix').innerHTML = '<p style="margin:10px 0 4px"><b>Prompt sửa lỗi</b> (dán vào khung chat AI Studio):</p>' + q3.fix_prompts.map((p, i) => `<div class="row" style="margin-bottom:6px"><button class="btn ghost sm" data-fix="${i}">Copy</button><span style="flex:1">${esc(p)}</span></div>`).join('');
+    $('#r3fix').innerHTML = '<p class="sub-h">Prompt sửa lỗi <span class="muted">(dán vào khung chat AI Studio)</span></p>' + q3.fix_prompts.map((p, i) => `<div class="fix"><button class="btn ghost sm" data-fix="${i}">${icon('copy')}Copy</button><span>${esc(p)}</span></div>`).join('');
     document.querySelectorAll('[data-fix]').forEach((b) => b.onclick = () => copy(q3.fix_prompts[+b.dataset.fix]));
-    $('#r3demo').innerHTML = '<p style="margin:10px 0 4px"><b>Kịch bản demo cho giám khảo:</b></p><ol>' + q3.demo_script_vi.map((s) => `<li>${esc(s)}</li>`).join('') + '</ol>';
+    $('#r3demo').innerHTML = '<p class="sub-h">Kịch bản demo cho giám khảo</p><ol>' + q3.demo_script_vi.map((s) => `<li>${esc(s)}</li>`).join('') + '</ol>';
     if (a.q3.required_tool && !/ai studio/i.test(a.q3.required_tool)) $('#r3err').innerHTML += `<div class="alert warn">Đề yêu cầu công cụ <b>${esc(a.q3.required_tool)}</b> — prompt này vẫn dán được vào công cụ đó.</div>`;
   }
   $('#results').scrollIntoView({ behavior: 'smooth' });
@@ -408,16 +603,21 @@ function showResults(j) {
 
 // ---------- Health ----------
 $('#health').onclick = async () => {
-  $('#healthOut').innerHTML = '<span class="muted">Đang kiểm tra…</span>';
+  const b = $('#health');
+  b.disabled = true;
+  $('#healthOut').innerHTML = '<span class="muted row"><span class="spin"></span>Đang kiểm tra…</span>';
   try {
     const r = await fetch('/api/health', { headers: headers() });
     const j = await r.json();
-    if (!j.ok) throw new Error(j.error);
-    const line = (n, arr) => `<li>${n}: ${arr.length ? '<b style="color:var(--ok)">' + arr.join(', ') + '</b>' : '<b style="color:var(--err)">không có model phù hợp</b>'}</li>`;
-    $('#healthOut').innerHTML = `<div class="alert ${j.text.length && j.tts.length ? 'ok' : 'err'}">Key hoạt động. Model khả dụng:<ul style="margin:4px 0">${line('Đọc đề / viết nội dung', j.text)}${line('Tạo ảnh', j.image)}${line('Giọng đọc', j.tts)}</ul>Lưu ý: model ảnh gpt-image có thể cần xác minh tổ chức (Organization verification) trên platform.openai.com — nếu tạo ảnh lỗi, web tự dùng model dự phòng hoặc nền màu.</div>`;
+    if (!j.ok) throw new Error(j.error || r.statusText);
+    const line = (n, arr) => `<li>${n}: ${arr.length ? '<b>' + arr.map(esc).join(', ') + '</b>' : '<b style="color:var(--err)">không có model phù hợp</b>'}</li>`;
+    const good = j.text.length && j.tts.length;
+    setStatus(good ? 'ok' : 'err', good ? 'API hoạt động' : 'Thiếu model');
+    $('#healthOut').innerHTML = `<div class="alert ${good ? 'ok' : 'err'}">${good ? 'Key hoạt động.' : 'Key hoạt động nhưng thiếu model.'} Model khả dụng (dùng theo thứ tự):<ul>${line('Đọc đề / viết nội dung', j.text)}${line('Tạo ảnh', j.image)}${line('Giọng đọc', j.tts)}</ul>Nếu model đầu không dùng được, web tự chuyển sang model kế tiếp; ảnh lỗi hết thì slide dùng nền màu.</div>`;
   } catch (e) {
+    setStatus('err', 'API lỗi');
     $('#healthOut').innerHTML = `<div class="alert err">${esc(e.message)}</div>`;
-  }
+  } finally { b.disabled = false; }
 };
 
 // ---------- Fallback prompts ----------
@@ -432,14 +632,16 @@ async function loadFallback() {
   ];
   const box = $('#fbList');
   for (const [f, title] of list) {
-    const txt = await (await fetch('/prompts/' + f)).text();
     const card = document.createElement('div');
     card.className = 'card fb';
-    card.innerHTML = `<div class="row" style="justify-content:space-between"><h3>${esc(title)}</h3><div class="row"><button class="btn sm">Copy prompt</button><a class="btn ghost sm" href="/prompts/${f}" download>Tải .md</a></div></div><div class="md"></div>`;
-    card.querySelector('.md').textContent = txt;
-    const MARK = '===== PROMPT (copy từ dòng dưới) =====';
-    card.querySelector('button').onclick = () => copy(txt.includes(MARK) ? txt.split(MARK)[1].trim() : txt);
+    card.innerHTML = `<div class="row"><h3>${esc(title)}</h3><span class="spacer"></span><button class="btn sm">${icon('copy')}Copy prompt</button><a class="btn ghost sm" href="/prompts/${f}" download>${icon('dl')}Tải .md</a></div><div class="md">Đang tải…</div>`;
     box.appendChild(card);
+    try {
+      const txt = await (await fetch('/prompts/' + f)).text();
+      card.querySelector('.md').textContent = txt;
+      const MARK = '===== PROMPT (copy từ dòng dưới) =====';
+      card.querySelector('button').onclick = () => copy(txt.includes(MARK) ? txt.split(MARK)[1].trim() : txt);
+    } catch { card.querySelector('.md').textContent = 'Không tải được prompt — tải lại trang rồi thử lại.'; }
   }
 }
 </script>
