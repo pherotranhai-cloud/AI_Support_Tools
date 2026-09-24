@@ -27,16 +27,24 @@ const MIME = {
 const slug = (s) => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').replace(/[^a-zA-Z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 40) || 'SanPham';
 
 // ---- Bảo vệ bằng mã truy cập (tùy chọn) ----
-function guard(req, res, next) {
+function codeOk(given) {
   const code = process.env.ACCESS_CODE;
-  if (!code) return next();
-  if ((req.get('x-access-code') || req.query.code) === code) return next();
-  res.status(401).json({ error: 'Sai hoặc thiếu mã truy cập.' });
+  if (!code) return true;
+  const a = crypto.createHash('sha256').update(String(given || '')).digest();
+  const b = crypto.createHash('sha256').update(code).digest();
+  return crypto.timingSafeEqual(a, b);
+}
+function guard(req, res, next) {
+  if (codeOk(req.get('x-access-code') || req.query.code)) return next();
+  // chậm lại khi sai mã để chống dò mã
+  setTimeout(() => res.status(401).json({ error: 'Sai hoặc thiếu mã truy cập.' }), 600);
 }
 
 app.get('/api/config', (req, res) => {
   res.json({ needCode: !!process.env.ACCESS_CODE, hasKey: !!process.env.OPENAI_API_KEY });
 });
+
+app.get('/api/verify', guard, (req, res) => res.json({ ok: true }));
 
 app.get('/api/health', guard, async (req, res) => {
   try {
@@ -165,7 +173,7 @@ setInterval(() => {
   for (const [id, j] of jobs) if (now - j.created > JOB_TTL) jobs.delete(id);
 }, 10 * 60 * 1000).unref();
 
-app.use('/prompts', express.static(path.join(__dirname, 'prompts')));
+app.use('/prompts', guard, express.static(path.join(__dirname, 'prompts')));
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use((err, req, res, next) => {

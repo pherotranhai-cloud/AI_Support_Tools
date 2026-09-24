@@ -14,7 +14,7 @@ Tab **“Làm tay (dự phòng)”** chứa sẵn prompt cho ChatGPT / Gemini / 
 1. Render Dashboard → **New → Blueprint** → chọn repo này (Render đọc `render.yaml`).
    Hoặc **New → Web Service** → repo này → Build `npm install`, Start `npm start`, Node 22.
 2. Tab **Environment**: thêm `OPENAI_API_KEY` (bắt buộc), `ACCESS_CODE` (khuyên dùng — mã để vào web, tránh người lạ dùng key).
-3. Deploy → mở URL `https://<ten-service>.onrender.com` → bấm **Kiểm tra API**.
+3. Deploy → mở URL `https://<ten-service>.onrender.com` → nhập mã truy cập → đèn trạng thái ở góc trên phải phải xanh (**API sẵn sàng**).
 
 > Gói Free của Render “ngủ” sau 15 phút không dùng, lần mở đầu chờ ~1 phút. Ngày thi: mở web trước 5 phút, hoặc nâng lên gói **Starter** trong ngày đó.
 > Render không giới hạn thời gian như Netlify Functions; web chạy theo job + polling nên xử lý 1–3 phút vẫn ổn.
@@ -23,7 +23,7 @@ Tab **“Làm tay (dự phòng)”** chứa sẵn prompt cho ChatGPT / Gemini / 
 | Biến | Mặc định | Ghi chú |
 |---|---|---|
 | `OPENAI_API_KEY` | — | bắt buộc |
-| `ACCESS_CODE` | trống | mã truy cập web |
+| `ACCESS_CODE` | trống | mã truy cập: có mã thì web hiện màn hình nhập mã trước khi vào |
 | `TEXT_MODEL` | `gpt-6-luna` → `gpt-4o` → `gpt-4.1` → `gpt-4o-mini` | model đọc đề/viết nội dung (cần hỗ trợ ảnh + PDF + JSON schema). Có thể ghi nhiều model, cách nhau dấu phẩy, web tự thử lần lượt |
 | `IMAGE_MODEL` | `gpt-6-luna` → `gpt-image-1` → `gpt-image-1-mini` → `dall-e-3` | gpt-image cần **Organization verification** trên platform.openai.com. Lỗi hết → slide dùng nền màu |
 | `IMAGE_QUALITY` | `low` | `low` rẻ + nhanh nhất (mặc định); `medium` / `high` đẹp hơn nhưng đắt hơn |

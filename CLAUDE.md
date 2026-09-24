@@ -23,15 +23,15 @@ Giúp một sinh viên (bạn của chủ repo) làm bài **thi thực hành “
   - Ảnh lỗi → dùng khối màu thay thế, không làm hỏng cả job.
 - `lib/q2.js`: GPT vision trích xuất → `{fields, tables, notes}` → ExcelJS (header màu, freeze, autofilter, chuyển “1.200.000” → số) + docx. Luôn xuất cả 2 file; UI tô đậm file đề yêu cầu. Không có file ở ô ② → dùng ảnh trong đề.
 - `lib/q3.js`: sinh prompt tiếng Anh cho AI Studio Build (UI tiếng Việt, Gemini JSON schema, Web Speech API, quiz, localStorage progress) + fix_prompts + kịch bản demo.
-- `public/index.html`: 1 file vanilla JS; kéo thả, **Ctrl+V dán ảnh chụp đề**, chọn câu, tiến độ, tải từng file / zip, nút “Copy prompt & mở AI Studio”, nút Kiểm tra API, tab Làm tay.
-- `ACCESS_CODE` (tùy chọn): header `x-access-code` hoặc `?code=`.
+- `public/index.html`: 1 file vanilla JS; kéo thả, **Ctrl+V dán ảnh chụp đề**, chọn câu, tiến độ, tải từng file / zip, nút “Copy prompt & mở AI Studio”, tab Làm tay. Header có đèn trạng thái: vừa vào trang là tự gọi `/api/health` (bấm đèn để kiểm tra lại, di chuột xem model).
+- `ACCESS_CODE` (tùy chọn): có mã → trang hiện màn hình nhập mã trước (kiểm tra qua `/api/verify`, nhớ trong localStorage). Mọi `/api/*` và `/prompts/*` đòi header `x-access-code` hoặc `?code=`; sai mã bị trễ 600 ms.
 
 ## Trạng thái
 - ✅ Code hoàn chỉnh, đã test end-to-end với **OpenAI giả lập** (mock server): job chạy đủ 3 câu, PPTX hợp lệ (python-pptx đọc được, LibreOffice render đúng bố cục, có audio + timing), XLSX/DOCX đúng, UI không lỗi console.
 - ⏳ CHƯA test với **OpenAI key thật** (phiên trước không có key). Việc cần làm tiếp:
   1. Push code lên GitHub `https://github.com/pherotranhai-cloud/AI_Support_Tools` (nhánh main).
   2. Deploy Render (Blueprint từ `render.yaml` hoặc Web Service thủ công), nhập `OPENAI_API_KEY`, `ACCESS_CODE`.
-  3. Mở web → “Kiểm tra API” → chạy thử với đề mẫu + 1 ảnh hóa đơn thật. Kiểm tra: tên model hợp lệ, gpt-image có cần Organization verification không, giọng TTS tiếng Việt ổn không.
+  3. Mở web → xem đèn trạng thái trên header → chạy thử với đề mẫu + 1 ảnh hóa đơn thật. Kiểm tra: tên model hợp lệ, gpt-image có cần Organization verification không, giọng TTS tiếng Việt ổn không.
   4. Mở file PPTX bằng **PowerPoint thật** (Windows) → F5 → xác nhận audio tự phát & tự chuyển slide. Nếu PowerPoint báo cần sửa file → xem lại XML timing trong `lib/q1.js` (`timingXml`).
   5. (Tùy chọn) tinh chỉnh thiết kế slide, thêm lựa chọn giọng đọc trên UI.
 - File hướng dẫn cho thí sinh: `docs/HuongDan_ThiCDR_AI.docx`.

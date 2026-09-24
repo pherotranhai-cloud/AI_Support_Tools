@@ -174,9 +174,6 @@
   .fix span { flex: 1; font-size: 13.5px; }
   .sub-h { margin: 14px 0 4px; font-weight: 700; font-size: 14px; }
 
-  /* ---------- Health ---------- */
-  .health { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-  .health .muted { flex: 1; min-width: 220px; }
 
   /* ---------- Manual tab ---------- */
   .fb h3 { margin: 0; font-size: 15.5px; }
@@ -184,11 +181,26 @@
 
   .toast { position: fixed; bottom: 24px; left: 50%; transform: translate(-50%, 10px); background: #16213e; color: #fff; padding: 10px 18px; border-radius: 10px; font-size: 14px; opacity: 0; transition: .2s; pointer-events: none; z-index: 10; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
   .toast.show { opacity: 1; transform: translate(-50%, 0); }
+  /* ---------- Access gate ---------- */
+  body.locked header nav, body.locked main, body.locked footer, body.locked #srvStatus { display: none !important; }
+  .gate { min-height: calc(100vh - 80px); display: grid; place-items: center; padding: 24px 16px; }
+  .gate-card { width: 100%; max-width: 400px; background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 28px 24px; box-shadow: var(--shadow); text-align: center; }
+  .gate-card .lock { width: 56px; height: 56px; border-radius: 16px; margin: 0 auto 14px; display: grid; place-items: center; background: var(--pri-soft); color: var(--pri); }
+  .gate-card .lock svg { width: 28px; height: 28px; }
+  .gate-card h2 { margin: 0 0 4px; font-size: 19px; }
+  .gate-card p { margin: 0 0 18px; }
+  .gate-card input { text-align: center; font-size: 17px; letter-spacing: 1px; }
+  .gate-card .btn { width: 100%; margin-top: 12px; padding: 12px; font-size: 15.5px; }
+  .gate-err { color: var(--err); font-size: 13.5px; min-height: 20px; margin-top: 10px; }
+  .shake { animation: shake .35s; }
+  @keyframes shake { 20%, 60% { transform: translateX(-7px); } 40%, 80% { transform: translateX(7px); } }
+  .status { cursor: pointer; font: inherit; font-size: 12.5px; }
+  .status:hover { background: rgba(255,255,255,.14); }
   footer { text-align: center; color: var(--muted); font-size: 12.5px; padding: 0 16px 30px; }
   @media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } }
 </style>
 </head>
-<body>
+<body class="locked">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-doc" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></symbol>
   <symbol id="i-img" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></symbol>
@@ -199,6 +211,7 @@
   <symbol id="i-ext" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></symbol>
   <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></symbol>
   <symbol id="i-retry" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
   <symbol id="i-pulse" viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></symbol>
 </svg>
 
@@ -209,7 +222,7 @@
       <h1>AI Exam Solver</h1>
       <div class="sub">Thi Chuẩn đầu ra AI · Slide + audio · Trích xuất ảnh/PDF · App học ngôn ngữ</div>
     </div>
-    <span class="status" id="srvStatus" title="Trạng thái server"><span class="dot" id="srvDot"></span><span id="srvText">Đang kết nối…</span></span>
+    <button type="button" class="status" id="srvStatus" title="Bấm để kiểm tra lại"><span class="dot" id="srvDot"></span><span id="srvText">Đang kiểm tra…</span></button>
     <nav role="tablist">
       <button class="active" data-tab="auto" role="tab" aria-selected="true">Tự động</button>
       <button data-tab="manual" role="tab" aria-selected="false">Làm tay (dự phòng)</button>
@@ -217,13 +230,20 @@
   </div>
 </header>
 
+<div class="gate hidden" id="gate">
+  <form class="gate-card" id="gateForm" autocomplete="on">
+    <div class="lock"><svg class="i"><use href="#i-lock"/></svg></div>
+    <h2>Nhập mã truy cập</h2>
+    <p class="muted">Hỏi người tạo web để lấy mã.</p>
+    <input type="password" id="code" placeholder="Mã truy cập" autocomplete="current-password" required />
+    <button class="btn" id="gateBtn" type="submit">Vào trang</button>
+    <div class="gate-err" id="gateErr" role="alert"></div>
+  </form>
+</div>
+
 <main>
   <!-- ============ TAB TỰ ĐỘNG ============ -->
   <section id="tab-auto">
-    <div id="codeBox" class="card hidden">
-      <div class="card-h"><span class="num">🔒</span><h2>Mã truy cập</h2></div>
-      <input type="password" id="code" placeholder="Nhập mã truy cập (hỏi người tạo web)" autocomplete="current-password" />
-    </div>
 
     <div class="card" id="inputCard">
       <div class="card-h"><span class="num">1</span><h2>Đưa đề và dữ liệu vào</h2></div>
@@ -344,14 +364,7 @@
       </div>
     </div>
 
-    <div class="card">
-      <div class="health">
-        <span class="muted">Kiểm tra trước giờ thi: key OpenAI trên server và các model đọc đề / tạo ảnh / giọng đọc có dùng được không.</span>
-        <button class="btn ghost sm" id="health"><svg class="i"><use href="#i-pulse"/></svg>Kiểm tra API</button>
-      </div>
-      <div id="healthOut" style="margin-top:10px"></div>
-    </div>
-  </section>
+</section>
 
   <!-- ============ TAB LÀM TAY ============ -->
   <section id="tab-manual" class="hidden">
@@ -375,15 +388,17 @@ const icon = (id) => `<svg class="i"><use href="#i-${id}"/></svg>`;
 
 function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2200); }
 function esc(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
-function getCode() { try { return localStorage.getItem('accessCode') || ''; } catch { return ''; } }
-function headers() { const c = $('#code').value || getCode(); return c ? { 'x-access-code': c } : {}; }
+let accessCode = '';
+try { accessCode = localStorage.getItem('accessCode') || ''; } catch {}
+function headers() { return accessCode ? { 'x-access-code': accessCode } : {}; }
+const withCode = (url) => accessCode ? url + (url.includes('?') ? '&' : '?') + 'code=' + encodeURIComponent(accessCode) : url;
 async function copy(text) {
   try { await navigator.clipboard.writeText(text); }
   catch { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }
   toast('Đã copy vào clipboard');
 }
-function fileUrl(name) { const c = $('#code').value || getCode(); return `/api/jobs/${jobId}/file?name=${encodeURIComponent(name)}${c ? '&code=' + encodeURIComponent(c) : ''}`; }
-function setStatus(state, text) { $('#srvDot').className = 'dot ' + state; $('#srvText').textContent = text; }
+function fileUrl(name) { return withCode(`/api/jobs/${jobId}/file?name=${encodeURIComponent(name)}`); }
+function setStatus(state, text, detail) { $('#srvDot').className = 'dot ' + state; $('#srvText').textContent = text; $('#srvStatus').title = (detail ? detail + '\n' : '') + 'Bấm để kiểm tra lại'; }
 const fmtTime = (s) => (s >= 60 ? `${Math.floor(s / 60)} phút ${s % 60} giây` : `${s} giây`);
 
 // ---------- Tabs ----------
@@ -395,15 +410,80 @@ document.querySelectorAll('nav button').forEach((b) => b.onclick = () => {
 });
 
 // ---------- Config ----------
-fetch('/api/config').then((r) => r.json()).then((c) => {
-  if (c.needCode) { $('#codeBox').classList.remove('hidden'); $('#code').value = getCode(); }
-  if (c.hasKey) setStatus('ok', 'Server sẵn sàng');
-  else {
-    setStatus('err', 'Chưa có API key');
-    $('#healthOut').innerHTML = '<div class="alert err">Server chưa có OPENAI_API_KEY. Vào Render → Environment để thêm.</div>';
-  }
-}).catch(() => setStatus('err', 'Không kết nối được server'));
-$('#code').addEventListener('change', () => { try { localStorage.setItem('accessCode', $('#code').value); } catch {} });
+// ---------- Mã truy cập (cổng vào) ----------
+async function verify(code) {
+  const r = await fetch('/api/verify', { headers: code ? { 'x-access-code': code } : {} });
+  return r.ok;
+}
+function unlock() {
+  $('#gate').classList.add('hidden');
+  document.body.classList.remove('locked');
+  checkHealth();
+}
+function lock(msg) {
+  document.body.classList.add('locked');
+  $('#gate').classList.remove('hidden');
+  $('#gateErr').textContent = msg || '';
+  setTimeout(() => $('#code').focus(), 50);
+}
+$('#gateForm').onsubmit = async (e) => {
+  e.preventDefault();
+  const code = $('#code').value.trim();
+  if (!code) return;
+  $('#gateBtn').disabled = true;
+  $('#gateBtn').innerHTML = '<span class="spin"></span>Đang kiểm tra…';
+  $('#gateErr').textContent = '';
+  try {
+    if (await verify(code)) {
+      accessCode = code;
+      try { localStorage.setItem('accessCode', code); } catch {}
+      unlock();
+    } else {
+      $('#gateErr').textContent = 'Mã truy cập không đúng.';
+      const c = $('.gate-card'); c.classList.remove('shake'); void c.offsetWidth; c.classList.add('shake');
+      $('#code').select();
+    }
+  } catch { $('#gateErr').textContent = 'Không kết nối được server — thử lại.'; }
+  $('#gateBtn').disabled = false;
+  $('#gateBtn').textContent = 'Vào trang';
+};
+function onUnauthorized() {
+  accessCode = '';
+  try { localStorage.removeItem('accessCode'); } catch {}
+  clearTimeout(pollTimer);
+  setRunning(false);
+  lock('Mã truy cập đã thay đổi — nhập lại mã mới.');
+}
+
+(async () => {
+  try {
+    const c = await (await fetch('/api/config')).json();
+    if (!c.needCode) return unlock();
+    if (accessCode && await verify(accessCode)) return unlock();
+    accessCode = '';
+    lock();
+  } catch { $('#gate').classList.remove('hidden'); $('#gateErr').textContent = 'Không kết nối được server. Tải lại trang sau ít giây (server có thể đang khởi động).'; }
+})();
+
+// ---------- Tự kiểm tra API (đèn trạng thái) ----------
+let checking = false;
+async function checkHealth() {
+  if (checking) return;
+  checking = true;
+  setStatus('', 'Đang kiểm tra API…');
+  try {
+    const r = await fetch('/api/health', { headers: headers() });
+    if (r.status === 401) return onUnauthorized();
+    const j = await r.json();
+    if (!j.ok) throw new Error(/OPENAI_API_KEY/.test(j.error || '') ? 'Server chưa có OPENAI_API_KEY (Render → Environment)' : j.error || r.statusText);
+    const good = j.text.length && j.tts.length;
+    const detail = `Đọc đề: ${j.text.join(', ') || '—'}\nTạo ảnh: ${j.image.join(', ') || '—'}\nGiọng đọc: ${j.tts.join(', ') || '—'}`;
+    setStatus(good ? 'ok' : 'err', good ? 'API sẵn sàng' : 'Thiếu model AI', detail);
+  } catch (e) {
+    setStatus('err', /OPENAI_API_KEY/.test(e.message) ? 'Chưa có API key' : 'API lỗi', e.message);
+  } finally { checking = false; }
+}
+$('#srvStatus').onclick = checkHealth;
 
 // ---------- Drop zones ----------
 function setTarget(t) { target = t; $('#dropExam').classList.toggle('focus', t === 'exam'); $('#dropData').classList.toggle('focus', t === 'data'); }
@@ -445,7 +525,7 @@ document.addEventListener('paste', (e) => {
   if (list.length) { e.preventDefault(); add(target, list); toast(`Đã dán ${list.length} ảnh vào ô ${target === 'exam' ? '① Đề thi' : '② Dữ liệu'}`); }
 });
 document.addEventListener('keydown', (e) => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !running && !$('#tab-auto').classList.contains('hidden')) { e.preventDefault(); solve(); }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !running && !document.body.classList.contains('locked') && !$('#tab-auto').classList.contains('hidden')) { e.preventDefault(); solve(); }
 });
 window.addEventListener('beforeunload', (e) => { if (running) { e.preventDefault(); e.returnValue = ''; } });
 
@@ -488,6 +568,7 @@ async function solve() {
   $('#progress').scrollIntoView({ behavior: 'smooth', block: 'start' });
   try {
     const r = await fetch('/api/solve', { method: 'POST', body: fd, headers: headers() });
+    if (r.status === 401) return onUnauthorized();
     const j = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(j.error || r.statusText);
     jobId = j.id;
@@ -505,6 +586,7 @@ async function poll() {
   clearTimeout(pollTimer);
   try {
     const r = await fetch('/api/jobs/' + jobId, { headers: headers() });
+    if (r.status === 401) return onUnauthorized();
     const j = await r.json();
     if (!r.ok) throw new Error(j.error);
     for (const [k, v] of Object.entries(j.steps)) $('#st-' + k).className = 'step ' + v;
@@ -601,25 +683,6 @@ function showResults(j) {
   $('#results').scrollIntoView({ behavior: 'smooth' });
 }
 
-// ---------- Health ----------
-$('#health').onclick = async () => {
-  const b = $('#health');
-  b.disabled = true;
-  $('#healthOut').innerHTML = '<span class="muted row"><span class="spin"></span>Đang kiểm tra…</span>';
-  try {
-    const r = await fetch('/api/health', { headers: headers() });
-    const j = await r.json();
-    if (!j.ok) throw new Error(j.error || r.statusText);
-    const line = (n, arr) => `<li>${n}: ${arr.length ? '<b>' + arr.map(esc).join(', ') + '</b>' : '<b style="color:var(--err)">không có model phù hợp</b>'}</li>`;
-    const good = j.text.length && j.tts.length;
-    setStatus(good ? 'ok' : 'err', good ? 'API hoạt động' : 'Thiếu model');
-    $('#healthOut').innerHTML = `<div class="alert ${good ? 'ok' : 'err'}">${good ? 'Key hoạt động.' : 'Key hoạt động nhưng thiếu model.'} Model khả dụng (dùng theo thứ tự):<ul>${line('Đọc đề / viết nội dung', j.text)}${line('Tạo ảnh', j.image)}${line('Giọng đọc', j.tts)}</ul>Nếu model đầu không dùng được, web tự chuyển sang model kế tiếp; ảnh lỗi hết thì slide dùng nền màu.</div>`;
-  } catch (e) {
-    setStatus('err', 'API lỗi');
-    $('#healthOut').innerHTML = `<div class="alert err">${esc(e.message)}</div>`;
-  } finally { b.disabled = false; }
-};
-
 // ---------- Fallback prompts ----------
 let fbLoaded = false;
 async function loadFallback() {
@@ -634,10 +697,10 @@ async function loadFallback() {
   for (const [f, title] of list) {
     const card = document.createElement('div');
     card.className = 'card fb';
-    card.innerHTML = `<div class="row"><h3>${esc(title)}</h3><span class="spacer"></span><button class="btn sm">${icon('copy')}Copy prompt</button><a class="btn ghost sm" href="/prompts/${f}" download>${icon('dl')}Tải .md</a></div><div class="md">Đang tải…</div>`;
+    card.innerHTML = `<div class="row"><h3>${esc(title)}</h3><span class="spacer"></span><button class="btn sm">${icon('copy')}Copy prompt</button><a class="btn ghost sm" href="${withCode('/prompts/' + f)}" download>${icon('dl')}Tải .md</a></div><div class="md">Đang tải…</div>`;
     box.appendChild(card);
     try {
-      const txt = await (await fetch('/prompts/' + f)).text();
+      const txt = await (await fetch('/prompts/' + f, { headers: headers() })).text();
       card.querySelector('.md').textContent = txt;
       const MARK = '===== PROMPT (copy từ dòng dưới) =====';
       card.querySelector('button').onclick = () => copy(txt.includes(MARK) ? txt.split(MARK)[1].trim() : txt);
