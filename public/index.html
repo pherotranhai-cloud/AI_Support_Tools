@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Exam Solver</title>
+<style>
+  :root {
+    --bg: #f5f6f8; --card: #fff; --text: #1d2330; --muted: #6b7280; --line: #e3e6eb;
+    --pri: #2457d6; --pri-soft: #e8eefc; --ok: #178a4c; --ok-soft: #e6f5ec; --warn: #b26b00; --warn-soft: #fff4e0; --err: #c62828; --err-soft: #fdecec;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.5; }
+  header { background: #16213e; color: #fff; padding: 14px 20px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  header h1 { font-size: 18px; margin: 0; font-weight: 700; }
+  header .sub { color: #aab4cc; font-size: 13px; }
+  nav { margin-left: auto; display: flex; gap: 6px; }
+  nav button { background: transparent; border: 1px solid #3a4870; color: #dfe6f7; padding: 6px 12px; border-radius: 8px; cursor: pointer; font: inherit; font-size: 13px; }
+  nav button.active { background: #fff; color: #16213e; border-color: #fff; }
+  main { max-width: 1080px; margin: 0 auto; padding: 20px 16px 60px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin-bottom: 16px; }
+  .card h2 { margin: 0 0 12px; font-size: 16px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 760px) { .grid2 { grid-template-columns: 1fr; } nav { margin-left: 0; } }
+  .drop { border: 2px dashed #b9c3d6; border-radius: 10px; padding: 16px; text-align: center; cursor: pointer; background: #fafbfd; transition: .15s; min-height: 130px; display: flex; flex-direction: column; justify-content: center; }
+  .drop.focus { border-color: var(--pri); background: var(--pri-soft); }
+  .drop .big { font-weight: 600; }
+  .drop .hint { color: var(--muted); font-size: 13px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; justify-content: center; }
+  .chip { background: #eef1f6; border-radius: 999px; padding: 3px 6px 3px 10px; font-size: 12px; display: inline-flex; align-items: center; gap: 4px; max-width: 100%; }
+  .chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }
+  .chip button { border: none; background: none; cursor: pointer; color: var(--muted); font-size: 14px; line-height: 1; }
+  .thumb { width: 28px; height: 28px; object-fit: cover; border-radius: 4px; }
+  textarea, input[type=text], input[type=password] { width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 10px; font: inherit; resize: vertical; }
+  label.q { display: inline-flex; align-items: center; gap: 6px; margin-right: 16px; cursor: pointer; }
+  .row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .btn { background: var(--pri); color: #fff; border: none; border-radius: 9px; padding: 11px 20px; font: inherit; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
+  .btn:hover { filter: brightness(1.08); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .btn.big { font-size: 17px; padding: 14px 28px; }
+  .btn.ghost { background: #fff; color: var(--pri); border: 1px solid #c6d3f3; }
+  .btn.ok { background: var(--ok); }
+  .btn.sm { padding: 6px 12px; font-size: 13px; font-weight: 600; }
+  .steps { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .step { padding: 5px 12px; border-radius: 999px; font-size: 13px; background: #eef1f6; color: var(--muted); }
+  .step.running { background: var(--pri-soft); color: var(--pri); }
+  .step.done { background: var(--ok-soft); color: var(--ok); }
+  .step.error { background: var(--err-soft); color: var(--err); }
+  .log { background: #0f1629; color: #cfe1ff; font-family: Consolas, monospace; font-size: 12.5px; border-radius: 8px; padding: 10px 12px; max-height: 180px; overflow: auto; white-space: pre-wrap; }
+  .alert { border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; font-size: 14px; }
+  .alert.warn { background: var(--warn-soft); color: #6d4300; border: 1px solid #f2d19c; }
+  .alert.err { background: var(--err-soft); color: #8e1b1b; border: 1px solid #f3b9b9; }
+  .alert.ok { background: var(--ok-soft); color: #0f5d33; border: 1px solid #b6e0c7; }
+  .res h3 { margin: 0 0 6px; font-size: 16px; display: flex; align-items: center; gap: 8px; }
+  .tag { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--pri-soft); color: var(--pri); }
+  .muted { color: var(--muted); font-size: 13px; }
+  ol.slides { margin: 8px 0 0; padding-left: 20px; font-size: 14px; }
+  ol.slides li { margin-bottom: 4px; }
+  ol.slides .n { color: var(--muted); font-size: 12.5px; display: block; }
+  table.pv { border-collapse: collapse; width: 100%; font-size: 13px; margin-top: 8px; }
+  table.pv th, table.pv td { border: 1px solid var(--line); padding: 5px 8px; text-align: left; vertical-align: top; }
+  table.pv th { background: #1f4e79; color: #fff; }
+  .tablewrap { overflow-x: auto; max-height: 320px; overflow-y: auto; }
+  pre.prompt { background: #f7f8fb; border: 1px solid var(--line); border-radius: 8px; padding: 12px; white-space: pre-wrap; font-size: 13px; max-height: 300px; overflow: auto; margin: 8px 0; }
+  .steps-howto { background: #f7f9ff; border: 1px solid #dfe7fb; border-radius: 8px; padding: 10px 14px; font-size: 14px; margin-top: 10px; }
+  .steps-howto ol { margin: 4px 0 0; padding-left: 20px; }
+  .hidden { display: none !important; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #16213e; color: #fff; padding: 10px 18px; border-radius: 8px; font-size: 14px; opacity: 0; transition: .2s; pointer-events: none; z-index: 10; }
+  .toast.show { opacity: 1; }
+  .fb h3 { margin-top: 0; }
+  .fb .md { white-space: pre-wrap; font-size: 13.5px; background: #fafbfd; border: 1px solid var(--line); border-radius: 8px; padding: 12px; max-height: 420px; overflow: auto; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>AI Exam Solver</h1>
+    <div class="sub">Thi Chuẩn đầu ra AI: slide + audio · trích xuất ảnh/PDF · prompt app học ngôn ngữ</div>
+  </div>
+  <nav>
+    <button class="active" data-tab="auto">Tự động</button>
+    <button data-tab="manual">Làm tay (dự phòng)</button>
+  </nav>
+</header>
+
+<main>
+  <!-- ============ TAB TỰ ĐỘNG ============ -->
+  <section id="tab-auto">
+    <div id="codeBox" class="card hidden">
+      <h2>Mã truy cập</h2>
+      <input type="password" id="code" placeholder="Nhập mã truy cập (hỏi người tạo web)" />
+    </div>
+
+    <div class="card">
+      <h2>Bước 1 — Đưa đề và dữ liệu vào</h2>
+      <div class="grid2">
+        <div>
+          <div class="drop focus" id="dropExam" tabindex="0">
+            <div class="big">① ĐỀ THI</div>
+            <div class="hint">Kéo thả / bấm để chọn / <b>Ctrl+V</b> dán ảnh chụp đề<br>Ảnh, PDF, Word, TXT</div>
+            <div class="chips" id="chipsExam"></div>
+          </div>
+        </div>
+        <div>
+          <div class="drop" id="dropData" tabindex="0">
+            <div class="big">② ẢNH / PDF CẦN TRÍCH XUẤT (Câu 2)</div>
+            <div class="hint">Kéo thả / bấm chọn / bấm vào ô này rồi <b>Ctrl+V</b><br>Bỏ trống nếu ảnh đã nằm trong đề</div>
+            <div class="chips" id="chipsData"></div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:14px">
+        <textarea id="note" rows="2" placeholder="(Tùy chọn) Ghi chú thêm — ví dụ: sản phẩm là điện thoại Galaxy S26; 8 slide; app học tiếng Nhật…"></textarea>
+      </div>
+      <div class="row" style="margin-top:12px; justify-content: space-between">
+        <div>
+          <label class="q"><input type="checkbox" class="qsel" value="1" checked> Câu 1 (Slide)</label>
+          <label class="q"><input type="checkbox" class="qsel" value="2" checked> Câu 2 (Trích xuất)</label>
+          <label class="q"><input type="checkbox" class="qsel" value="3" checked> Câu 3 (App)</label>
+        </div>
+        <button class="btn big" id="go">Giải đề</button>
+      </div>
+      <input type="file" id="fileExam" multiple accept="image/*,.pdf,.docx,.txt,.md,.pptx" hidden />
+      <input type="file" id="fileData" multiple accept="image/*,.pdf,.docx,.txt" hidden />
+    </div>
+
+    <div class="card hidden" id="progress">
+      <h2>Bước 2 — Đang xử lý <span class="muted" id="elapsed"></span></h2>
+      <div class="steps">
+        <span class="step" id="st-analyze">Phân tích đề</span>
+        <span class="step" id="st-q1">Câu 1</span>
+        <span class="step" id="st-q2">Câu 2</span>
+        <span class="step" id="st-q3">Câu 3</span>
+      </div>
+      <div class="log" id="log"></div>
+    </div>
+
+    <div id="results" class="hidden">
+      <div class="card">
+        <div class="row" style="justify-content: space-between">
+          <h2 style="margin:0">Bước 3 — Kết quả</h2>
+          <a class="btn ok" id="zipAll" href="#">Tải tất cả (.zip)</a>
+        </div>
+        <p class="muted" id="summary" style="margin:8px 0 0"></p>
+      </div>
+      <div id="warnings"></div>
+
+      <div class="card res hidden" id="r1">
+        <h3>Câu 1 — Slide có ảnh + lời thuyết trình audio <span class="tag" id="r1tag"></span></h3>
+        <div id="r1err"></div>
+        <div class="row" id="r1btns"></div>
+        <div class="steps-howto">
+          <b>Cách dùng:</b>
+          <ol>
+            <li>Mở file .pptx bằng PowerPoint → nhấn <b>F5</b>: mỗi slide <b>tự phát giọng đọc</b> và tự chuyển slide khi đọc xong.</li>
+            <li>Biểu tượng loa nằm ở góc phải dưới mỗi slide (bấm vào để nghe lại). Lời thuyết trình có sẵn trong phần Notes.</li>
+            <li>Nếu đề yêu cầu nộp video: PowerPoint → File → Export → <b>Create a Video</b> (chọn “Use Recorded Timings and Narrations”).</li>
+          </ol>
+        </div>
+        <ol class="slides" id="r1slides"></ol>
+      </div>
+
+      <div class="card res hidden" id="r2">
+        <h3>Câu 2 — Trích xuất dữ liệu <span class="tag" id="r2tag"></span></h3>
+        <div id="r2err"></div>
+        <div class="row" id="r2btns"></div>
+        <p class="muted" id="r2sum"></p>
+        <div id="r2preview"></div>
+      </div>
+
+      <div class="card res hidden" id="r3">
+        <h3>Câu 3 — App học ngôn ngữ trên Google AI Studio <span class="tag" id="r3tag"></span></h3>
+        <div id="r3err"></div>
+        <div id="r3body">
+          <div class="row">
+            <button class="btn" id="r3go">Copy prompt &amp; mở AI Studio</button>
+            <button class="btn ghost sm" id="r3copy">Chỉ copy prompt</button>
+            <a class="btn ghost sm" id="r3dl" href="#">Tải file .txt</a>
+          </div>
+          <div class="steps-howto">
+            <b>Cách làm (3 thao tác):</b>
+            <ol>
+              <li>Bấm nút xanh ở trên → trang AI Studio Build mở ra (đăng nhập Google nếu được hỏi).</li>
+              <li>Bấm vào ô nhập mô tả → <b>Ctrl+V</b> → bấm <b>Build</b> (hoặc Enter). Chờ 1–3 phút.</li>
+              <li>App chạy ở khung Preview bên phải. Nộp bài: bấm <b>Share</b> (hoặc Deploy/Publish) để lấy link, hoặc Download để tải mã nguồn.</li>
+            </ol>
+            Nếu app lỗi: copy một “prompt sửa lỗi” bên dưới, dán vào khung chat bên trái của AI Studio.
+          </div>
+          <p class="muted" id="r3line"></p>
+          <pre class="prompt" id="r3prompt"></pre>
+          <div id="r3fix"></div>
+          <div id="r3demo"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="row">
+          <button class="btn ghost" id="again">Làm lại (giữ file đã chọn)</button>
+          <button class="btn ghost" id="reset">Bài mới (xóa hết)</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="justify-content: space-between">
+        <span class="muted">Kiểm tra API trước giờ thi (key OpenAI trên server, model ảnh/giọng đọc có dùng được không).</span>
+        <button class="btn ghost sm" id="health">Kiểm tra API</button>
+      </div>
+      <div id="healthOut" style="margin-top:10px"></div>
+    </div>
+  </section>
+
+  <!-- ============ TAB LÀM TAY ============ -->
+  <section id="tab-manual" class="hidden">
+    <div class="alert warn">Dùng khi web tự động lỗi. Mỗi câu: bấm <b>Copy prompt</b> → dán vào công cụ AI được ghi → làm theo các bước trong prompt.</div>
+    <div id="fbList"></div>
+  </section>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const files = { exam: [], data: [] };
+let target = 'exam';
+let jobId = null;
+let pollTimer = null;
+let startedAt = 0;
+
+function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2200); }
+function esc(s) { return String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+function getCode() { try { return localStorage.getItem('accessCode') || ''; } catch { return ''; } }
+function headers() { const c = $('#code').value || getCode(); return c ? { 'x-access-code': c } : {}; }
+async function copy(text) {
+  try { await navigator.clipboard.writeText(text); }
+  catch { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }
+  toast('Đã copy vào clipboard');
+}
+function fileUrl(name) { const c = $('#code').value || getCode(); return `/api/jobs/${jobId}/file?name=${encodeURIComponent(name)}${c ? '&code=' + encodeURIComponent(c) : ''}`; }
+
+// ---------- Tabs ----------
+document.querySelectorAll('nav button').forEach((b) => b.onclick = () => {
+  document.querySelectorAll('nav button').forEach((x) => x.classList.toggle('active', x === b));
+  $('#tab-auto').classList.toggle('hidden', b.dataset.tab !== 'auto');
+  $('#tab-manual').classList.toggle('hidden', b.dataset.tab !== 'manual');
+  if (b.dataset.tab === 'manual') loadFallback();
+});
+
+// ---------- Config ----------
+fetch('/api/config').then((r) => r.json()).then((c) => {
+  if (c.needCode) { $('#codeBox').classList.remove('hidden'); $('#code').value = getCode(); }
+  if (!c.hasKey) $('#healthOut').innerHTML = '<div class="alert err">Server chưa có OPENAI_API_KEY. Vào Render → Environment để thêm.</div>';
+});
+$('#code').addEventListener('change', () => { try { localStorage.setItem('accessCode', $('#code').value); } catch {} });
+
+// ---------- Drop zones ----------
+function setTarget(t) { target = t; $('#dropExam').classList.toggle('focus', t === 'exam'); $('#dropData').classList.toggle('focus', t === 'data'); }
+function render(kind) {
+  const box = kind === 'exam' ? $('#chipsExam') : $('#chipsData');
+  box.innerHTML = '';
+  files[kind].forEach((f, i) => {
+    const el = document.createElement('div');
+    el.className = 'chip';
+    if (f.type.startsWith('image/')) { const img = document.createElement('img'); img.className = 'thumb'; img.src = URL.createObjectURL(f); el.appendChild(img); }
+    const s = document.createElement('span'); s.textContent = f.name; el.appendChild(s);
+    const x = document.createElement('button'); x.textContent = '×'; x.title = 'Bỏ file';
+    x.onclick = (e) => { e.stopPropagation(); files[kind].splice(i, 1); render(kind); };
+    el.appendChild(x); box.appendChild(el);
+  });
+}
+function add(kind, list) {
+  for (const f of list) {
+    if (!f) continue;
+    const name = f.name && f.name !== 'image.png' ? f.name : `anh_dan_${Date.now()}_${files[kind].length + 1}.png`;
+    files[kind].push(new File([f], name, { type: f.type }));
+  }
+  render(kind);
+}
+[['exam', '#dropExam', '#fileExam'], ['data', '#dropData', '#fileData']].forEach(([kind, dz, inp]) => {
+  const d = $(dz), i = $(inp);
+  d.onclick = () => { setTarget(kind); i.click(); };
+  d.onfocus = () => setTarget(kind);
+  i.onchange = () => { add(kind, i.files); i.value = ''; };
+  d.ondragover = (e) => { e.preventDefault(); setTarget(kind); };
+  d.ondrop = (e) => { e.preventDefault(); add(kind, e.dataTransfer.files); };
+});
+document.addEventListener('paste', (e) => {
+  if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+  const list = [...(e.clipboardData?.items || [])].filter((it) => it.kind === 'file').map((it) => it.getAsFile());
+  if (list.length) { e.preventDefault(); add(target, list); toast(`Đã dán ${list.length} ảnh vào ô ${target === 'exam' ? '① Đề thi' : '② Dữ liệu'}`); }
+});
+
+// ---------- Solve ----------
+async function solve() {
+  const qs = [...document.querySelectorAll('.qsel:checked')].map((x) => x.value);
+  if (!qs.length) return toast('Chọn ít nhất 1 câu');
+  if (!files.exam.length && !$('#note').value.trim() && !confirm('Chưa có file đề. Dùng đề mẫu mặc định?')) return;
+  const fd = new FormData();
+  files.exam.forEach((f) => fd.append('exam', f));
+  files.data.forEach((f) => fd.append('data', f));
+  fd.append('note', $('#note').value);
+  fd.append('questions', qs.join(','));
+  $('#go').disabled = true;
+  $('#results').classList.add('hidden');
+  $('#progress').classList.remove('hidden');
+  $('#log').textContent = 'Đang gửi file lên server… (nếu server đang “ngủ”, lần đầu có thể mất ~1 phút để khởi động)';
+  ['analyze', 'q1', 'q2', 'q3'].forEach((k) => $('#st-' + k).className = 'step');
+  startedAt = Date.now();
+  try {
+    const r = await fetch('/api/solve', { method: 'POST', body: fd, headers: headers() });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || r.statusText);
+    jobId = j.id;
+    poll();
+  } catch (e) {
+    $('#log').textContent = '✖ ' + e.message;
+    $('#go').disabled = false;
+  }
+}
+$('#go').onclick = solve;
+$('#again').onclick = () => { window.scrollTo({ top: 0, behavior: 'smooth' }); solve(); };
+$('#reset').onclick = () => { files.exam = []; files.data = []; render('exam'); render('data'); $('#note').value = ''; $('#results').classList.add('hidden'); $('#progress').classList.add('hidden'); window.scrollTo({ top: 0 }); };
+
+async function poll() {
+  clearTimeout(pollTimer);
+  try {
+    const r = await fetch('/api/jobs/' + jobId, { headers: headers() });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error);
+    $('#elapsed').textContent = `(${Math.round((Date.now() - startedAt) / 1000)} giây)`;
+    for (const [k, v] of Object.entries(j.steps)) $('#st-' + k).className = 'step ' + (v === 'skip' ? '' : v);
+    $('#log').textContent = j.logs.map((l) => l.m).join('\n');
+    $('#log').scrollTop = 1e9;
+    if (j.status === 'running') { pollTimer = setTimeout(poll, 1500); return; }
+    $('#go').disabled = false;
+    showResults(j);
+  } catch (e) {
+    $('#log').textContent += '\n⚠ ' + e.message + ' — thử lại…';
+    pollTimer = setTimeout(poll, 3000);
+  }
+}
+
+function btn(label, href, cls = 'btn') { return `<a class="${cls}" href="${href}">${esc(label)}</a>`; }
+
+function showResults(j) {
+  $('#results').classList.remove('hidden');
+  const a = j.result.analysis;
+  $('#summary').textContent = a ? a.exam_summary : '';
+  const warn = [...(a?.warnings || [])];
+  if (j.errors.fatal) warn.unshift('Lỗi: ' + j.errors.fatal);
+  $('#warnings').innerHTML = warn.map((w, i) => `<div class="alert ${i === 0 && j.errors.fatal ? 'err' : 'warn'}">${esc(w)}</div>`).join('');
+  const hasZip = j.files.includes('TatCa_KetQua.zip');
+  $('#zipAll').classList.toggle('hidden', !hasZip);
+  if (hasZip) $('#zipAll').href = fileUrl('TatCa_KetQua.zip');
+
+  // Câu 1
+  const s1 = j.steps.q1;
+  $('#r1').classList.toggle('hidden', s1 === 'skip' || !a);
+  $('#r1err').innerHTML = j.errors.q1 ? `<div class="alert err">${esc(j.errors.q1)} — bấm “Làm lại” hoặc dùng tab Làm tay.</div>` : '';
+  const q1 = j.result.q1;
+  $('#r1tag').textContent = a ? a.q1.product : '';
+  if (q1) {
+    $('#r1btns').innerHTML = btn('Tải Slide (.pptx)', fileUrl(q1.pptx)) + ' ' + btn('Lời thuyết trình (.txt)', fileUrl(q1.script), 'btn ghost sm');
+    $('#r1slides').innerHTML = q1.slides.map((s) => `<li><b>${esc(s.title)}</b><span class="n">${esc(s.narration)}</span></li>`).join('');
+    if (q1.imageErrors) $('#r1err').innerHTML += `<div class="alert warn">${q1.imageErrors} ảnh không tạo được (key có thể chưa được dùng model ảnh) → đã thay bằng nền màu. Có thể tự chèn ảnh trong PowerPoint (Insert → Pictures → Stock Images).</div>`;
+    if (a.q1.required_tool) $('#r1err').innerHTML += `<div class="alert warn">Đề yêu cầu dùng <b>${esc(a.q1.required_tool)}</b>: xem tab “Làm tay” câu 1 để làm lại trên công cụ đó (có thể import file PPTX này vào).</div>`;
+  } else { $('#r1btns').innerHTML = ''; $('#r1slides').innerHTML = ''; }
+
+  // Câu 2
+  const s2 = j.steps.q2;
+  $('#r2').classList.toggle('hidden', s2 === 'skip' || !a);
+  $('#r2err').innerHTML = j.errors.q2 ? `<div class="alert err">${esc(j.errors.q2)}</div>` : '';
+  const q2 = j.result.q2;
+  if (q2) {
+    const fmt = q2.format;
+    $('#r2tag').textContent = fmt === 'excel' ? 'Đề yêu cầu: Excel' : fmt === 'word' ? 'Đề yêu cầu: Word' : 'Excel + Word';
+    const x = btn('Tải Excel (.xlsx)', fileUrl(q2.xlsx), fmt === 'word' ? 'btn ghost sm' : 'btn');
+    const w = btn('Tải Word (.docx)', fileUrl(q2.docx), fmt === 'excel' ? 'btn ghost sm' : 'btn');
+    $('#r2btns').innerHTML = (fmt === 'word' ? w + ' ' + x : x + ' ' + w);
+    const d = q2.data;
+    $('#r2sum').textContent = (d.summary || '') + (q2.usedExamFiles ? ' (Không có file ở ô ②, đã trích xuất từ ảnh trong đề.)' : '');
+    let html = '';
+    if (d.fields?.length) html += `<div class="tablewrap"><table class="pv"><tr><th>Thông tin</th><th>Giá trị</th></tr>${d.fields.map((f) => `<tr><td>${esc(f.label)}</td><td>${esc(f.value)}</td></tr>`).join('')}</table></div>`;
+    for (const t of d.tables || []) html += `<p style="margin:12px 0 0"><b>${esc(t.name)}</b> <span class="muted">(${t.rows.length} dòng)</span></p><div class="tablewrap"><table class="pv"><tr>${t.columns.map((c) => `<th>${esc(c)}</th>`).join('')}</tr>${t.rows.slice(0, 30).map((r) => `<tr>${t.columns.map((_, i) => `<td>${esc(r[i])}</td>`).join('')}</tr>`).join('')}</table></div>`;
+    if (d.notes?.length) html += `<p class="muted">Lưu ý: ${d.notes.map(esc).join(' · ')}</p>`;
+    $('#r2preview').innerHTML = html;
+  } else { $('#r2btns').innerHTML = ''; $('#r2preview').innerHTML = ''; $('#r2sum').textContent = ''; }
+
+  // Câu 3
+  const s3 = j.steps.q3;
+  $('#r3').classList.toggle('hidden', s3 === 'skip' || !a);
+  $('#r3err').innerHTML = j.errors.q3 ? `<div class="alert err">${esc(j.errors.q3)} — dùng tab Làm tay câu 3.</div>` : '';
+  const q3 = j.result.q3;
+  $('#r3body').classList.toggle('hidden', !q3);
+  if (q3) {
+    $('#r3tag').textContent = q3.app_name;
+    $('#r3line').textContent = q3.one_line_vi;
+    $('#r3prompt').textContent = q3.prompt;
+    $('#r3dl').href = fileUrl(q3.file);
+    $('#r3copy').onclick = () => copy(q3.prompt);
+    $('#r3go').onclick = async () => { await copy(q3.prompt); window.open('https://aistudio.google.com/apps', '_blank'); };
+    $('#r3fix').innerHTML = '<p style="margin:10px 0 4px"><b>Prompt sửa lỗi</b> (dán vào khung chat AI Studio):</p>' + q3.fix_prompts.map((p, i) => `<div class="row" style="margin-bottom:6px"><button class="btn ghost sm" data-fix="${i}">Copy</button><span style="flex:1">${esc(p)}</span></div>`).join('');
+    document.querySelectorAll('[data-fix]').forEach((b) => b.onclick = () => copy(q3.fix_prompts[+b.dataset.fix]));
+    $('#r3demo').innerHTML = '<p style="margin:10px 0 4px"><b>Kịch bản demo cho giám khảo:</b></p><ol>' + q3.demo_script_vi.map((s) => `<li>${esc(s)}</li>`).join('') + '</ol>';
+    if (a.q3.required_tool && !/ai studio/i.test(a.q3.required_tool)) $('#r3err').innerHTML += `<div class="alert warn">Đề yêu cầu công cụ <b>${esc(a.q3.required_tool)}</b> — prompt này vẫn dán được vào công cụ đó.</div>`;
+  }
+  $('#results').scrollIntoView({ behavior: 'smooth' });
+}
+
+// ---------- Health ----------
+$('#health').onclick = async () => {
+  $('#healthOut').innerHTML = '<span class="muted">Đang kiểm tra…</span>';
+  try {
+    const r = await fetch('/api/health', { headers: headers() });
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error);
+    const line = (n, arr) => `<li>${n}: ${arr.length ? '<b style="color:var(--ok)">' + arr.join(', ') + '</b>' : '<b style="color:var(--err)">không có model phù hợp</b>'}</li>`;
+    $('#healthOut').innerHTML = `<div class="alert ${j.text.length && j.tts.length ? 'ok' : 'err'}">Key hoạt động. Model khả dụng:<ul style="margin:4px 0">${line('Đọc đề / viết nội dung', j.text)}${line('Tạo ảnh', j.image)}${line('Giọng đọc', j.tts)}</ul>Lưu ý: model ảnh gpt-image có thể cần xác minh tổ chức (Organization verification) trên platform.openai.com — nếu tạo ảnh lỗi, web tự dùng model dự phòng hoặc nền màu.</div>`;
+  } catch (e) {
+    $('#healthOut').innerHTML = `<div class="alert err">${esc(e.message)}</div>`;
+  }
+};
+
+// ---------- Fallback prompts ----------
+let fbLoaded = false;
+async function loadFallback() {
+  if (fbLoaded) return;
+  fbLoaded = true;
+  const list = [
+    ['cau1_slide.md', 'Câu 1 — Slide + audio (ChatGPT / Gemini)'],
+    ['cau2_trich_xuat.md', 'Câu 2 — Trích xuất ảnh/PDF (Gemini)'],
+    ['cau3_aistudio.md', 'Câu 3 — App học ngôn ngữ (Google AI Studio)'],
+  ];
+  const box = $('#fbList');
+  for (const [f, title] of list) {
+    const txt = await (await fetch('/prompts/' + f)).text();
+    const card = document.createElement('div');
+    card.className = 'card fb';
+    card.innerHTML = `<div class="row" style="justify-content:space-between"><h3>${esc(title)}</h3><div class="row"><button class="btn sm">Copy prompt</button><a class="btn ghost sm" href="/prompts/${f}" download>Tải .md</a></div></div><div class="md"></div>`;
+    card.querySelector('.md').textContent = txt;
+    const MARK = '===== PROMPT (copy từ dòng dưới) =====';
+    card.querySelector('button').onclick = () => copy(txt.includes(MARK) ? txt.split(MARK)[1].trim() : txt);
+    box.appendChild(card);
+  }
+}
+</script>
+</body>
+</html>

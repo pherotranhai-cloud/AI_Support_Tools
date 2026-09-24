@@ -1,0 +1,24 @@
+{
+  "name": "ai-exam-solver",
+  "version": "1.0.0",
+  "description": "Web giải đề thi Chuẩn đầu ra AI: slide+audio, trích xuất ảnh/PDF, prompt AI Studio",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "docx": "^9.7.2",
+    "exceljs": "^4.4.0",
+    "express": "^5.2.1",
+    "jszip": "^3.10.2",
+    "mammoth": "^1.12.3",
+    "multer": "^2.4.0",
+    "pptxgenjs": "^4.0.1"
+  },
+  "type": "commonjs",
+  "engines": {
+    "node": ">=20"
+  }
+}

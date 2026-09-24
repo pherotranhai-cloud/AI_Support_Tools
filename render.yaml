@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: ai-exam-solver
+    runtime: node
+    plan: free            # nên nâng lên "starter" trong ngày thi để server không ngủ
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/config
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false        # nhập tay trên Render Dashboard
+      - key: ACCESS_CODE
+        sync: false        # mã truy cập web (để trống = ai có link cũng dùng được)
+      - key: NODE_VERSION
+        value: "22"
