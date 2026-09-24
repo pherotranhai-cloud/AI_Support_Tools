@@ -15,7 +15,7 @@ Giúp một sinh viên (bạn của chủ repo) làm bài **thi thực hành “
 - Chủ repo nhắc “nhập key vào env Netlify” nhưng backend ở Render → key phải nhập ở **Render → Environment** (`OPENAI_API_KEY`).
 
 ## Kiến trúc (xem README.md để biết chi tiết file)
-- `lib/openai.js`: fetch thuần, retry 429/5xx, **tự thử model dự phòng** khi model không tồn tại/không có quyền (cache model chạy được). Model mặc định: text `gpt-4o`, image `gpt-image-1`, tts `gpt-4o-mini-tts` — override bằng env (`TEXT_MODEL`, `IMAGE_MODEL`, `TTS_MODEL`, danh sách phân cách dấu phẩy). Tên model OpenAI thay đổi theo thời gian → nếu lỗi, kiểm tra `/api/health` (liệt kê model mà key dùng được) rồi chỉnh env.
+- `lib/openai.js`: fetch thuần, retry 429/5xx, **tự thử model dự phòng** khi model không tồn tại/không có quyền (cache model chạy được). Model mặc định: text `gpt-6-luna`, image `gpt-6-luna`, tts `gpt-4o-mini-tts-2025-12-15` (các model cũ giữ làm dự phòng) — override bằng env (`TEXT_MODEL`, `IMAGE_MODEL`, `TTS_MODEL`, danh sách phân cách dấu phẩy). Tên model OpenAI thay đổi theo thời gian → nếu lỗi, kiểm tra `/api/health` (liệt kê model mà key dùng được) rồi chỉnh env.
 - `lib/analyze.js`: đề (ảnh/PDF/DOCX/TXT) + ghi chú → JSON schema yêu cầu từng câu + `warnings` (vd đề bắt buộc Gamma).
 - `lib/q1.js`: GPT viết nội dung + narration + image_prompt → ảnh (pool 3) & TTS mp3 (pool 4) song song → PptxGenJS (LAYOUT_WIDE, slide bìa/nội dung/kết) → hậu xử lý bằng JSZip:
   - đổi `<a:videoFile>` → `<a:audioFile>` (PptxGenJS ghi audio sai thẻ), content-type `audio/mp3` → `audio/mpeg`;
